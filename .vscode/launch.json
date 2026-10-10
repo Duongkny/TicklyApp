@@ -1,0 +1,28 @@
+
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Tickly Development",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "development"
+      ]
+    },
+    {
+      "name": "Tickly Production",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "production"
+      ]
+    }
+  ]
+}

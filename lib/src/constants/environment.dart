@@ -1,20 +1,11 @@
-
-import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
-import '../core/logger/logger.dart';
-
-enum AppEnvironment {
-  development,
-  production,
-}
+import 'package:tickly/src/core/logger/logger.dart';
 
 class Environment {
-  Environment._();
-
   static bool _isInitialized = false;
-
-  static AppEnvironment? _current;
+  static String? _apiUrl;
+  static String? _ivUtf8;
 
   static Future<void> initialize() async {
     if (_isInitialized) {
@@ -23,31 +14,11 @@ class Environment {
     }
 
     try {
-      final flavor = appFlavor;
-
-      _current = switch (flavor) {
-        'development' => AppEnvironment.development,
-        'production' => AppEnvironment.production,
-        _ => throw StateError(
-            'Invalid Flutter flavor: $flavor',
-          ),
-      };
-
       await dotenv.load(fileName: fileName);
-
-      final declaredEnv = dotenv.env['APP_ENV'];
-
-      if (declaredEnv != _current!.name) {
-        throw StateError(
-          'Environment mismatch: '
-          'flavor=$flavor, APP_ENV=$declaredEnv',
-        );
-      }
-
+      _apiUrl = dotenv.env['API_URL'] ?? _throwMissingEnv('API_URL');
+      _ivUtf8 = dotenv.env['IV_UTF8'] ?? _throwMissingEnv('IV_UTF8');
       _isInitialized = true;
-      logger.i(
-        'Environment initialized: ${_current!.name}',
-      );
+      logger.i('Environment initialized successfully');
     } catch (e, s) {
       logger.e('Failed to initialize environment: $e');
       logger.d('Stack trace: $s');
@@ -56,40 +27,33 @@ class Environment {
   }
 
   static String get fileName {
-    switch (appFlavor) {
-      case 'development':
-        return '.env.development';
-
-      case 'production':
-        return '.env.production';
-
-      default:
-        throw StateError(
-          'Invalid Flutter flavor: $appFlavor',
-        );
+    if (kReleaseMode) {
+      return '.env.production';
     }
+    return '.env.development';
   }
 
-  static AppEnvironment get current {
+  static String get getApiUrl {
     _checkInitialized();
-    return _current!;
+    return _apiUrl!;
   }
 
-  static bool get isDevelopment =>
-      current == AppEnvironment.development;
-
-  static bool get isProduction =>
-      current == AppEnvironment.production;
-
-  static String get appName =>
-      isDevelopment ? 'Tickly Dev' : 'Tickly';
+  static String get getIVUtf8 {
+    _checkInitialized();
+    return _ivUtf8!;
+  }
 
   static void _checkInitialized() {
     if (!_isInitialized) {
       throw StateError(
-        'Environment not initialized. '
-        'Call Environment.initialize() first.',
+        'Environment not initialized. Call Environment.initialize() first.',
       );
     }
+  }
+
+  static String _throwMissingEnv(String key) {
+    throw StateError(
+      'Environment variable $key not found. Please check your .env file.',
+    );
   }
 }

@@ -4,6 +4,8 @@ void main() {
   runApp(const MyApp());
 }
 
+bool isInitializedFirebase = false;
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

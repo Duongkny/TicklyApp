@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:tickly/src/constants/environment.dart';
 
-void main() {
+import 'package:tickly/src/core/firebase/firebase_provider.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Environment.initialize();
+  await FirebaseProvider.initialize();
   runApp(const MyApp());
 }
 

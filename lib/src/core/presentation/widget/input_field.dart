@@ -17,6 +17,7 @@ class InputField extends StatefulWidget {
     this.onFieldSubmitted,
     this.textAlign = TextAlign.start,
     this.inputFormatters,
+    this.enabled = true,
     this.onChanged,
     super.key,
   });
@@ -107,7 +108,7 @@ class InputField extends StatefulWidget {
     String hintText = 'Email',
     Widget? prefixIcon,
     TextInputAction textInputAction = TextInputAction.next,
-    Key? key,
+    Key? key, required bool enabled,
   }) : this(
          key: key,
          controller: controller,
@@ -127,7 +128,7 @@ class InputField extends StatefulWidget {
     Widget? prefixIcon,
     TextInputAction textInputAction = TextInputAction.next,
     ValueChanged<String>? onFieldSubmitted,
-    Key? key,
+    Key? key, required bool enabled,
   }) : this(
          key: key,
          controller: controller,
@@ -135,16 +136,50 @@ class InputField extends StatefulWidget {
          keyboardType: TextInputType.visiblePassword,
          autofillHints: const [AutofillHints.password],
          errorText: errorText,
+          enabled: enabled,
          hintText: hintText,
          prefixIcon: prefixIcon,
          validator: Validators.password,
          onFieldSubmitted: onFieldSubmitted,
        );
+InputField.confirmPassword({
+  required TextEditingController controller,
+  required TextEditingController passwordController,
+  String? errorText,
+  String hintText = 'Confirm Password',
+  Widget? prefixIcon,
+  TextInputAction textInputAction = TextInputAction.done,
+  ValueChanged<String>? onFieldSubmitted,
+  bool enabled = true,
+  Key? key,
+}) : this(
+       key: key,
+       controller: controller,
+       textInputAction: textInputAction,
+       keyboardType: TextInputType.visiblePassword,
+       errorText: errorText,
+       hintText: hintText,
+       prefixIcon: prefixIcon,
+       enabled: enabled,
+       autofillHints: const [AutofillHints.newPassword],
+       onFieldSubmitted: onFieldSubmitted,
+       validator: (value) {
+         if (value == null || value.isEmpty) {
+           return 'Vui lòng xác nhận mật khẩu';
+         }
 
+         if (value != passwordController.text) {
+           return 'Mật khẩu xác nhận không khớp';
+         }
+
+         return null;
+       },
+     );
   final TextEditingController controller;
   final TextInputAction textInputAction;
   final TextInputType keyboardType;
   final String? errorText;
+  final bool enabled;
   final String? hintText;
   final Widget? prefixIcon;
   final List<String>? autofillHints;
@@ -191,6 +226,7 @@ class _InputFieldState extends State<InputField> {
       textAlign: widget.textAlign,
       inputFormatters: widget.inputFormatters,
       obscureText: _obscureText,
+      enabled: widget.enabled,
       validator: validator,
       autofillHints: widget.autofillHints,
       onFieldSubmitted: widget.onFieldSubmitted,

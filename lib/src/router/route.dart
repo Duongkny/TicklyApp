@@ -6,7 +6,9 @@ abstract final class AppRoute {
   static const statistics = '/statistics';
 
   // Authentication
-  static const signIn = '/sign-in';
-  static const signUp = '/sign-up';
-  static const forgotPassword = '/forgot-password';
+static const welcome = '/welcome';
+static const signIn = '/sign-in';
+static const signUp = '/sign-up';
+static const forgotPassword = '/forgot-password';
+static const verifyEmail = '/verify-email';
 }

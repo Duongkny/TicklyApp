@@ -1,32 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:tickly/src/constants/environment.dart';
-import 'package:tickly/src/core/app/my_app.dart';
 import 'package:tickly/src/core/firebase/firebase_provider.dart';
+import 'package:tickly/src/core/injections/injections.dart';
 import 'package:tickly/src/core/local_storage/app_local_storage.dart';
 import 'package:tickly/src/core/localization/bloc/localization_bloc.dart';
 import 'package:tickly/src/core/localization/bloc/localization_event.dart';
+import 'package:tickly/src/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:tickly/src/features/auth/presentation/bloc/auth_event.dart';
+
+import 'src/core/app/my_app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Environment
+  debugPrint('STEP 1: Initialize Environment');
   await Environment.initialize();
 
-  // 2. Firebase
+  debugPrint('STEP 2: Initialize Firebase');
   await FirebaseProvider.initialize();
 
-  // 3. Hive CE + Register Adapters + Open Boxes
+  debugPrint('STEP 3: Initialize Hive');
   await AppLocalStorage().initLocalStorage();
 
-  // 4. Dependency Injection
-  // await configureDependencies();
+  debugPrint('STEP 4: Initialize Injection');
+  await configureDependencies();
 
-  // 5. Run App
+  debugPrint('STEP 5: Check AuthBloc');
+  debugPrint(
+    'AuthBloc registered: ${getIt.isRegistered<AuthBloc>()}',
+  );
+
+  debugPrint('STEP 6: Run App');
+
   runApp(
-    BlocProvider<LocalizationBloc>(
-      create: (_) => LocalizationBloc()..add(GetLanguage()),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider<LocalizationBloc>(
+          create: (_) => LocalizationBloc()..add(GetLanguage()),
+        ),
+        BlocProvider<AuthBloc>(
+          create: (_) => getIt<AuthBloc>()..add(const AuthStarted()),
+        ),
+      ],
       child: const MyApp(),
     ),
   );

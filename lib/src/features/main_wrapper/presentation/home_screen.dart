@@ -18,21 +18,33 @@ class HomeScreen extends StatelessWidget {
 
   // ==================== CREATE TASK ====================
 
-  void _openCreateTask(BuildContext context) {
-    final taskBloc = context.read<TaskBloc>();
 
-    // Xóa trạng thái thao tác trước đó
-    taskBloc.add(const TaskActionCleared());
+void _openCreateTask(BuildContext context) {
+  final taskBloc = context.read<TaskBloc>();
 
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => BlocProvider.value(
-          value: taskBloc,
-          child: const CreateTaskScreen(),
-        ),
+  taskBloc.add(const TaskActionCleared());
+
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => MultiBlocProvider(
+        providers: [
+          // Dùng lại TaskBloc đang có.
+          BlocProvider<TaskBloc>.value(
+            value: taskBloc,
+          ),
+
+          // Tạo CategoryBloc để lấy danh mục.
+          BlocProvider<CategoryBloc>(
+            create: (_) => getIt<CategoryBloc>()
+              ..add(const CategoryStarted()),
+          ),
+        ],
+        child: const CreateTaskScreen(),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   // ==================== TASK DETAIL ====================
 

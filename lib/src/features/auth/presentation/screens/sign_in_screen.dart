@@ -1,19 +1,25 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:tickly/src/core/extensions/context.dart';
+import 'package:tickly/src/core/presentation/widget/input_field.dart';
 import 'package:tickly/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:tickly/src/features/auth/presentation/bloc/auth_event.dart';
 import 'package:tickly/src/features/auth/presentation/bloc/auth_state.dart';
 import 'package:tickly/src/router/route.dart';
 
+// Điều chỉnh import nếu InputField nằm ở thư mục khác.
+
+
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
 
   @override
-  State<SignInScreen> createState() => _SignInScreenState();
+  State<SignInScreen> createState() =>
+      _SignInScreenState();
 }
 
 class _SignInScreenState extends State<SignInScreen> {
@@ -22,7 +28,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _obscurePassword = true;
+  bool _signInPending = false;
 
   @override
   void dispose() {
@@ -32,11 +38,15 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _signIn() {
+    if (_signInPending) return;
+
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    FocusScope.of(context).unfocus();
+    context.closeKeyboard();
+
+    setState(() => _signInPending = true);
 
     context.read<AuthBloc>().add(
       AuthSignInRequested(
@@ -46,171 +56,208 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
+  void _signInWithGoogle() {
+    if (_signInPending) return;
+
+    context.closeKeyboard();
+
+    setState(() => _signInPending = true);
+
+    context.read<AuthBloc>().add(
+      const AuthGoogleSignInRequested(),
+    );
+  }
+
+  void _handleAuthenticated(AuthState state) {
+    if (state.user?.isEmailVerified == true) {
+      context.go(AppRoute.home);
+    } else {
+      context.go(AppRoute.verifyEmail);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
 
     return BlocConsumer<AuthBloc, AuthState>(
-      listenWhen: (previous, current) =>
-          previous.actionStatus != current.actionStatus ||
-          previous.errorMessage != current.errorMessage,
+      listenWhen: (previous, current) {
+        if (!_signInPending) return false;
+
+        return previous.actionStatus != current.actionStatus ||
+            previous.status != current.status;
+      },
       listener: (context, state) {
-        if (state.status == AuthStatus.authenticated) {
-          context.go(AppRoute.home);
+        if (!_signInPending) return;
+
+        if (state.actionStatus == AuthActionStatus.failure) {
+          setState(() => _signInPending = false);
+
+          context.showSnackBarMessage(
+            state.errorMessage ?? context.loc.signInFailure,
+            isError: true,
+          );
           return;
         }
 
-        if (state.actionStatus == AuthActionStatus.failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage ?? 'Đăng nhập thất bại'),
-              backgroundColor: colors.error,
-            ),
-          );
+        if (state.status == AuthStatus.authenticated &&
+            state.user != null &&
+            state.actionStatus == AuthActionStatus.success) {
+          setState(() => _signInPending = false);
+          _handleAuthenticated(state);
         }
-
-        // Điều hướng sau đăng nhập sẽ do GoRouter
-        // xử lý khi AuthStatus thay đổi.
       },
       builder: (context, state) {
-        final isLoading = state.actionStatus == AuthActionStatus.loading;
+        final isLoading = _signInPending;
 
         return Scaffold(
           backgroundColor: colors.surface,
           body: SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 24.w,
+                  vertical: 24.h,
+                ),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 440),
+                  constraints:
+                      const BoxConstraints(maxWidth: 440),
                   child: Form(
                     key: _formKey,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.stretch,
                       children: [
                         _buildHeader(context),
 
                         SizedBox(height: 40.h),
 
-                        // Email
-                        Text('Email', style: context.textTheme.titleSmall),
+                        Text(
+                          context.loc.commonEmail,
+                          style: context.textTheme.titleSmall,
+                        ),
                         SizedBox(height: 8.h),
-                        TextFormField(
+
+                        InputField.email(
                           controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const [AutofillHints.email],
+                          hintText: 'name@example.com',
+                          prefixIcon:
+                              const Icon(Icons.email_outlined),
                           enabled: !isLoading,
-                          decoration: const InputDecoration(
-                            hintText: 'name@example.com',
-                            prefixIcon: Icon(Icons.email_outlined),
-                          ),
-                          validator: (value) {
-                            final email = value?.trim() ?? '';
-
-                            if (email.isEmpty) {
-                              return 'Vui lòng nhập email';
-                            }
-
-                            final emailRegex = RegExp(
-                              r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-                            );
-
-                            if (!emailRegex.hasMatch(email)) {
-                              return 'Email không hợp lệ';
-                            }
-
-                            return null;
-                          },
                         ),
 
                         SizedBox(height: 20.h),
 
-                        // Password
-                        Text('Password', style: context.textTheme.titleSmall),
+                        Text(
+                          context.loc.commonPassword,
+                          style: context.textTheme.titleSmall,
+                        ),
                         SizedBox(height: 8.h),
-                        TextFormField(
+
+                        InputField.password(
                           controller: _passwordController,
-                          obscureText: _obscurePassword,
+                          hintText: context.loc.signInPasswordHint,
+                          prefixIcon:
+                              const Icon(Icons.lock_outline),
                           textInputAction: TextInputAction.done,
-                          autofillHints: const [AutofillHints.password],
                           enabled: !isLoading,
                           onFieldSubmitted: (_) {
                             if (!isLoading) _signIn();
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Enter your password',
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                              ),
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Vui lòng nhập mật khẩu';
-                            }
-                            return null;
                           },
                         ),
 
                         SizedBox(height: 8.h),
 
-                        // Forgot Password
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: isLoading
                                 ? null
-                                : () => context.push('/forgot-password'),
-                            child: const Text('Forgot password?'),
+                                : () => context.push(
+                                      AppRoute.forgotPassword,
+                                    ),
+                            child:
+                                Text(context.loc.signInForgotPassword),
                           ),
                         ),
 
                         SizedBox(height: 24.h),
 
-                        // Sign In Button
                         FilledButton(
                           onPressed: isLoading ? null : _signIn,
                           style: FilledButton.styleFrom(
-                            minimumSize: Size(double.infinity, 52.h),
+                            minimumSize:
+                                Size(double.infinity, 52.h),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14.r),
+                              borderRadius:
+                                  BorderRadius.circular(14.r),
                             ),
                           ),
                           child: isLoading
-                              ? SizedBox(
-                                  height: 22.r,
-                                  width: 22.r,
-                                  child: const CircularProgressIndicator(
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text('Sign In'),
+                              : Text(context.loc.signInButton),
                         ),
 
                         SizedBox(height: 24.h),
 
-                        // Sign Up
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Flexible(
-                              child: Text("Don't have an account?"),
+                            const Expanded(child: Divider()),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                              ),
+                              child: Text(context.loc.commonOr),
+                            ),
+                            const Expanded(child: Divider()),
+                          ],
+                        ),
+
+                        SizedBox(height: 24.h),
+
+                        OutlinedButton.icon(
+                          onPressed:
+                              isLoading ? null : _signInWithGoogle,
+                          icon: const Icon(
+                            Icons.account_circle_outlined,
+                          ),
+                          label: Text(
+                            context.loc.signInWithGoogle,
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize:
+                                Size(double.infinity, 52.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(14.r),
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: 24.h),
+
+                        Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                context.loc.signUpAlreadyHaveAccount,
+                              ),
                             ),
                             TextButton(
                               onPressed: isLoading
                                   ? null
-                                  : () => context.push('/sign-up'),
-                              child: const Text('Sign Up'),
+                                  : () => context.push(
+                                        AppRoute.signUp,
+                                      ),
+                              child: Text(context.loc.signUpButton),
                             ),
                           ],
                         ),
@@ -236,7 +283,8 @@ class _SignInScreenState extends State<SignInScreen> {
           width: 76.r,
           decoration: BoxDecoration(
             color: colors.primaryContainer,
-            borderRadius: BorderRadius.circular(22.r),
+            borderRadius:
+                BorderRadius.circular(22.r),
           ),
           child: Icon(
             Icons.check_circle_outline_rounded,
@@ -244,20 +292,16 @@ class _SignInScreenState extends State<SignInScreen> {
             color: colors.onPrimaryContainer,
           ),
         ),
-
         SizedBox(height: 24.h),
-
         Text(
           'Welcome back!',
-          style: context.textTheme.headlineMedium?.copyWith(
+          style:
+              context.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: colors.onSurface,
           ),
           textAlign: TextAlign.center,
         ),
-
         SizedBox(height: 8.h),
-
         Text(
           'Sign in to continue managing your tasks.',
           style: context.textTheme.bodyMedium?.copyWith(

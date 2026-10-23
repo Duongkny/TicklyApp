@@ -33,4 +33,6 @@ abstract class AuthRepository {
 
   // Làm mới thông tin người dùng
   Future<AppUser?> reloadUser();
+
+  Future<AppUser> signInWithGoogle();
 }

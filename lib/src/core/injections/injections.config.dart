@@ -33,6 +33,8 @@ import 'package:tickly/src/features/auth/domain/usecases/reset_password_usecases
     as _i269;
 import 'package:tickly/src/features/auth/domain/usecases/send_email_verification_usecases.dart'
     as _i734;
+import 'package:tickly/src/features/auth/domain/usecases/sign_in_google_usecases.dart'
+    as _i747;
 import 'package:tickly/src/features/auth/domain/usecases/sign_in_usecases.dart'
     as _i497;
 import 'package:tickly/src/features/auth/domain/usecases/sign_out_usecases.dart'
@@ -78,6 +80,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i734.SendEmailVerification>(
       () => _i734.SendEmailVerification(gh<_i470.AuthRepository>()),
     );
+    gh.factory<_i747.SignInGoogle>(
+      () => _i747.SignInGoogle(gh<_i470.AuthRepository>()),
+    );
     gh.factory<_i497.SignIn>(() => _i497.SignIn(gh<_i470.AuthRepository>()));
     gh.factory<_i115.SignOut>(() => _i115.SignOut(gh<_i470.AuthRepository>()));
     gh.factory<_i564.SignUp>(() => _i564.SignUp(gh<_i470.AuthRepository>()));
@@ -91,6 +96,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i397.GetCurrentUser>(),
         gh<_i731.ObserveAuthState>(),
         gh<_i1056.ReloadUser>(),
+        gh<_i747.SignInGoogle>(),
       ),
     );
     return this;

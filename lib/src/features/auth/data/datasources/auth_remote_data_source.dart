@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:injectable/injectable.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 @lazySingleton
 class AuthRemoteDataSource {
@@ -47,6 +48,17 @@ class AuthRemoteDataSource {
     await user.sendEmailVerification();
   }
 
+  Future<User?> reloadUser() async {
+  final user = _firebaseAuth.currentUser;
+
+  if (user == null) {
+    return null;
+  }
+
+  await user.reload();
+
+  return _firebaseAuth.currentUser;
+}
   // Quên mật khẩu
   Future<void> resetPassword(String email) {
     return _firebaseAuth.sendPasswordResetEmail(
@@ -58,4 +70,30 @@ class AuthRemoteDataSource {
   Future<void> signOut() {
     return _firebaseAuth.signOut();
   }
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+
+Future<void>? _googleInitFuture;
+
+Future<void> _initGoogle() {
+  return _googleInitFuture ??= _googleSignIn.initialize();
 }
+
+Future<UserCredential> signInWithGoogle() async {
+  await _initGoogle();
+
+  final googleUser = await _googleSignIn.authenticate();
+
+  final googleAuth = googleUser.authentication;
+
+  final credential = GoogleAuthProvider.credential(
+    idToken: googleAuth.idToken,
+  );
+
+  return _firebaseAuth.signInWithCredential(credential);
+}
+
+
+
+}
+

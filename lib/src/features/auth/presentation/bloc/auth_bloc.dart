@@ -2,7 +2,9 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
+import 'package:tickly/src/features/auth/domain/usecases/sign_in_google_usecases.dart';
 
 import '../../domain/entities/app_user.dart';
 import '../../domain/usecases/get_current_user_usecases.dart';
@@ -27,6 +29,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final GetCurrentUser _getCurrentUser;
   final ObserveAuthState _observeAuthState;
   final ReloadUser _reloadUser;
+  final SignInGoogle _signInGoogle;
 
   StreamSubscription<AppUser?>? _authSubscription;
 
@@ -39,6 +42,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     this._getCurrentUser,
     this._observeAuthState,
     this._reloadUser,
+    this._signInGoogle
   ) : super(const AuthState()) {
     on<AuthStarted>(_onStarted);
     on<AuthUserChanged>(_onUserChanged);
@@ -48,6 +52,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthPasswordResetRequested>(_onResetPassword);
     on<AuthEmailVerificationRequested>(_onSendVerification);
     on<AuthReloadUserRequested>(_onReloadUser);
+    on<AuthGoogleSignInRequested>(_onGoogleSignIn);
   }
 
   // ================= AUTH SESSION =================
@@ -329,4 +334,58 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await _authSubscription?.cancel();
     await super.close();
   }
+
+  Future<void> _onGoogleSignIn(
+  AuthGoogleSignInRequested event,
+  Emitter<AuthState> emit,
+) async {
+  if (state.actionStatus == AuthActionStatus.loading) return;
+
+  emit(
+    state.copyWith(
+      actionStatus: AuthActionStatus.loading,
+      clearMessages: true,
+    ),
+  );
+
+  try {
+    final user = await _signInGoogle();
+
+    emit(
+      state.copyWith(
+        status: AuthStatus.authenticated,
+        user: user,
+        actionStatus: AuthActionStatus.success,
+        successMessage: 'Đăng nhập Google thành công',
+        clearMessages: true,
+      ),
+    );
+  } on GoogleSignInException catch (e) {
+    if (e.code == GoogleSignInExceptionCode.canceled) {
+      emit(
+        state.copyWith(
+          actionStatus: AuthActionStatus.initial,
+          clearMessages: true,
+        ),
+      );
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        actionStatus: AuthActionStatus.failure,
+        errorMessage: 'Không thể đăng nhập bằng Google',
+        clearMessages: true,
+      ),
+    );
+  } catch (e) {
+    emit(
+      state.copyWith(
+        actionStatus: AuthActionStatus.failure,
+        errorMessage: 'Đăng nhập Google thất bại. Vui lòng thử lại.',
+        clearMessages: true,
+      ),
+    );
+  }
+}
 }

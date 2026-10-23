@@ -1,6 +1,7 @@
 
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:injectable/injectable.dart';
+import 'package:tickly/src/features/auth/data/datasources/auth_remote_data_source.dart';
 
 import '../../domain/entities/app_user.dart';
 import '../../domain/repos/auth_repository.dart';
@@ -114,4 +115,20 @@ class AuthRepositoryImpl implements AuthRepository {
         ? null
         : _mapUser(updatedUser);
   }
+
+  @override
+Future<AppUser> signInWithGoogle() async {
+  final credential = await _remoteDataSource.signInWithGoogle();
+
+  final user = credential.user;
+
+  if (user == null) {
+    throw StateError('Google Sign-In failed: user is null');
+  }
+
+  return _mapUser(user);
+}
+
+
+
 }

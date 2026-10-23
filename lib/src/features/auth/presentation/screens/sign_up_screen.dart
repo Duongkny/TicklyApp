@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tickly/src/core/extensions/context.dart';
+import 'package:tickly/src/core/presentation/widget/input_field.dart';
 import 'package:tickly/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:tickly/src/features/auth/presentation/bloc/auth_event.dart';
 import 'package:tickly/src/features/auth/presentation/bloc/auth_state.dart';
@@ -14,7 +15,8 @@ class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  State<SignUpScreen> createState() =>
+      _SignUpScreenState();
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
@@ -24,8 +26,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
+  bool _signUpPending = false;
 
   @override
   void dispose() {
@@ -36,11 +37,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _signUp() {
+    if (_signUpPending) return;
+
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
     context.closeKeyboard();
+
+    setState(() => _signUpPending = true);
 
     context.read<AuthBloc>().add(
       AuthSignUpRequested(
@@ -56,32 +61,57 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final colors = context.colorScheme;
 
     return BlocConsumer<AuthBloc, AuthState>(
-      listenWhen: (previous, current) =>
-          previous.actionStatus != current.actionStatus ||
-          previous.errorMessage != current.errorMessage ||
-          previous.successMessage != current.successMessage,
+      listenWhen: (previous, current) {
+        if (!_signUpPending) return false;
+
+        return previous.actionStatus != current.actionStatus ||
+            previous.successMessage != current.successMessage ||
+            previous.errorMessage != current.errorMessage;
+      },
       listener: (context, state) {
+        if (!_signUpPending) return;
+
         if (state.actionStatus == AuthActionStatus.failure) {
+          setState(() => _signUpPending = false);
+
           context.showSnackBarMessage(
-            state.errorMessage ?? 'Đăng ký thất bại',
+            state.errorMessage ?? context.loc.signUpFailure,
             isError: true,
           );
+          return;
         }
 
-        if (state.actionStatus == AuthActionStatus.success &&
-            state.successMessage == 'Đăng ký thành công') {
-          context.showSnackBarMessage('Đăng ký thành công');
+        final registrationSucceeded =
+            state.actionStatus == AuthActionStatus.success &&
+            state.successMessage == context.loc.signUpSuccess;
 
-          // Nếu yêu cầu xác minh email:
-          // context.go(AppRoute.verifyEmail);
-          //
-          // Sau này Auth-aware GoRouter sẽ chịu trách nhiệm
-          // điều hướng theo phiên đăng nhập.
+        if (!registrationSucceeded) return;
+
+        setState(() => _signUpPending = false);
+
+        final user = state.user;
+
+        if (user == null) {
+          context.showSnackBarMessage(
+            'Không thể lấy thông tin tài khoản.',
+            isError: true,
+          );
+          return;
         }
+
+        if (user.isEmailVerified) {
+          context.go(AppRoute.home);
+          return;
+        }
+
+        context.read<AuthBloc>().add(
+          const AuthEmailVerificationRequested(),
+        );
+
+        context.go(AppRoute.verifyEmail);
       },
       builder: (context, state) {
-        final isLoading =
-            state.actionStatus == AuthActionStatus.loading;
+        final isLoading = _signUpPending;
 
         return Scaffold(
           backgroundColor: colors.surface,
@@ -93,7 +123,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   vertical: 24.h,
                 ),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 440),
+                  constraints:
+                      const BoxConstraints(maxWidth: 440),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -104,125 +135,55 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                         SizedBox(height: 32.h),
 
+                        // EMAIL
                         Text(
-                          'Email',
+                          context.loc.commonEmail,
                           style: context.textTheme.titleSmall,
                         ),
                         SizedBox(height: 8.h),
-                        TextFormField(
+
+                        InputField.email(
                           controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const [AutofillHints.email],
+                          hintText: 'name@example.com',
+                          prefixIcon:
+                              const Icon(Icons.email_outlined),
                           enabled: !isLoading,
-                          decoration: const InputDecoration(
-                            hintText: 'name@example.com',
-                            prefixIcon: Icon(Icons.email_outlined),
-                          ),
-                          validator: (value) {
-                            final email = value?.trim() ?? '';
-
-                            if (email.isEmpty) {
-                              return 'Vui lòng nhập email';
-                            }
-
-                            if (!RegExp(
-                              r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-                            ).hasMatch(email)) {
-                              return 'Email không hợp lệ';
-                            }
-
-                            return null;
-                          },
                         ),
 
                         SizedBox(height: 20.h),
 
+                        // PASSWORD
                         Text(
-                          'Password',
+                          context.loc.commonPassword,
                           style: context.textTheme.titleSmall,
                         ),
                         SizedBox(height: 8.h),
-                        TextFormField(
+
+                        InputField.password(
                           controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.next,
+                          hintText: context.loc.signUpPasswordHint,
+                          prefixIcon:
+                              const Icon(Icons.lock_outline),
                           enabled: !isLoading,
-                          autofillHints: const [AutofillHints.newPassword],
-                          decoration: InputDecoration(
-                            hintText: 'At least 8 characters',
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: IconButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () => setState(() {
-                                      _obscurePassword =
-                                          !_obscurePassword;
-                                    }),
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                              ),
-                            ),
-                          ),
-                          validator: (value) {
-                            final password = value ?? '';
-
-                            if (password.isEmpty) {
-                              return 'Vui lòng nhập mật khẩu';
-                            }
-
-                            if (password.length < 8) {
-                              return 'Mật khẩu phải có ít nhất 8 ký tự';
-                            }
-
-                            return null;
-                          },
                         ),
 
                         SizedBox(height: 20.h),
 
+                        // CONFIRM PASSWORD
                         Text(
-                          'Confirm Password',
+                          context.loc.commonConfirmPassword,
                           style: context.textTheme.titleSmall,
                         ),
                         SizedBox(height: 8.h),
-                        TextFormField(
+
+                        InputField.confirmPassword(
                           controller: _confirmPasswordController,
-                          obscureText: _obscureConfirmPassword,
-                          textInputAction: TextInputAction.done,
-                          enabled: !isLoading,
-                          autofillHints: const [AutofillHints.newPassword],
-                          decoration: InputDecoration(
-                            hintText: 'Re-enter your password',
-                            prefixIcon:
-                                const Icon(Icons.verified_user_outlined),
-                            suffixIcon: IconButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () => setState(() {
-                                      _obscureConfirmPassword =
-                                          !_obscureConfirmPassword;
-                                    }),
-                              icon: Icon(
-                                _obscureConfirmPassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                              ),
-                            ),
+                          passwordController: _passwordController,
+                          hintText: context.loc.signUpConfirmPasswordHint,
+                          prefixIcon: const Icon(
+                            Icons.verified_user_outlined,
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Vui lòng xác nhận mật khẩu';
-                            }
-
-                            if (value != _passwordController.text) {
-                              return 'Mật khẩu xác nhận không khớp';
-                            }
-
-                            return null;
-                          },
+                          enabled: !isLoading,
                           onFieldSubmitted: (_) {
                             if (!isLoading) _signUp();
                           },
@@ -233,36 +194,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         FilledButton(
                           onPressed: isLoading ? null : _signUp,
                           style: FilledButton.styleFrom(
-                            minimumSize: Size(double.infinity, 52.h),
+                            minimumSize:
+                                Size(double.infinity, 52.h),
                             shape: RoundedRectangleBorder(
                               borderRadius:
                                   BorderRadius.circular(14.r),
                             ),
                           ),
                           child: isLoading
-                              ? SizedBox(
-                                  width: 22.r,
-                                  height: 22.r,
-                                  child: const CircularProgressIndicator(
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child:
+                                      CircularProgressIndicator(
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text('Create Account'),
+                              : Text(context.loc.signUpButton),
                         ),
 
                         SizedBox(height: 20.h),
 
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment:
+                              MainAxisAlignment.center,
                           children: [
-                            const Flexible(
-                              child: Text('Already have an account?'),
+                            Flexible(
+                              child: Text(
+                                context.loc.signUpAlreadyHaveAccount,
+                              ),
                             ),
                             TextButton(
                               onPressed: isLoading
                                   ? null
-                                  : () => context.go(AppRoute.signIn),
-                              child: const Text('Sign In'),
+                                  : () => context.go(
+                                        AppRoute.signIn,
+                                      ),
+                              child: Text(context.loc.signUpSignIn),
                             ),
                           ],
                         ),
@@ -288,7 +256,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           height: 76.r,
           decoration: BoxDecoration(
             color: colors.primaryContainer,
-            borderRadius: BorderRadius.circular(22.r),
+            borderRadius:
+                BorderRadius.circular(22.r),
           ),
           child: Icon(
             Icons.person_add_alt_1_rounded,
@@ -300,7 +269,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         Text(
           'Create account',
           textAlign: TextAlign.center,
-          style: context.textTheme.headlineMedium?.copyWith(
+          style:
+              context.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),

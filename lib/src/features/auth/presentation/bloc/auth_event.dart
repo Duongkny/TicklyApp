@@ -71,3 +71,7 @@ class AuthEmailVerificationRequested extends AuthEvent {
 class AuthReloadUserRequested extends AuthEvent {
   const AuthReloadUserRequested();
 }
+
+class AuthGoogleSignInRequested extends AuthEvent {
+  const AuthGoogleSignInRequested();
+}

@@ -1,3 +1,5 @@
+import 'package:tickly/hive/hive_registrar.g.dart';
+
 import '../logger/logger.dart';
 import 'local_storage_key.dart';
 
@@ -33,25 +35,25 @@ class AppLocalStorage {
     return DateTime.now().toString();
   }
 
-  // static bool isRegisterAdapters = false;
+  static bool isRegisterAdapters = false;
 
-  // Future<void> initLocalStorage() async {
-  //   await Hive.initFlutter();
-  //   if (!isRegisterAdapters) {
-  //     Hive.registerAdapters();
-  //     isRegisterAdapters = true;
-  //   }
+  Future<void> initLocalStorage() async {
+    await Hive.initFlutter();
+    if (!isRegisterAdapters) {
+      Hive.registerAdapters();
+      isRegisterAdapters = true;
+    }
 
-  //   // Mở các box
-  //   await Future.wait([
-  //         Hive.openBox(LocalStorageKey.localStorage),
-  //         Hive.openBox(LocalStorageKey.token),
-  //       ])
-  //       .then((_) {
-  //         logger.d("Đã mở tất cả các box thành công");
-  //       })
-  //       .catchError((error) {
-  //         logger.e("Lỗi khi mở box: $error");
-  //       });
-  // }
+    // Mở các box
+    await Future.wait([
+          Hive.openBox(LocalStorageKey.localStorage),
+          Hive.openBox(LocalStorageKey.token),
+        ])
+        .then((_) {
+          logger.d("Đã mở tất cả các box thành công");
+        })
+        .catchError((error) {
+          logger.e("Lỗi khi mở box: $error");
+        });
+  }
 }

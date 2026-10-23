@@ -8,14 +8,11 @@ enum AppEnvironment {
 }
 
 class Environment {
-  Environment._();
-
   static bool _isInitialized = false;
 
   static String? _apiUrl;
   static String? _ivUtf8;
 
-  // Xác định môi trường dựa trên Flutter Flavor
   static AppEnvironment get current {
     switch (appFlavor) {
       case 'development':
@@ -38,7 +35,6 @@ class Environment {
   static bool get isProduction =>
       current == AppEnvironment.production;
 
-  // Lấy file .env theo Flavor, không theo Build Mode
   static String get fileName {
     switch (current) {
       case AppEnvironment.development:
@@ -58,21 +54,19 @@ class Environment {
     try {
       await dotenv.load(fileName: fileName);
 
-      // API_URL và IV_UTF8 chỉ cần thiết nếu dự án sử dụng
-      _apiUrl = dotenv.env['API_URL'];
-      _ivUtf8 = dotenv.env['IV_UTF8'];
-
-      // Kiểm tra để tránh dùng nhầm file môi trường
       final expectedEnvironment = current.name;
       final configuredEnvironment = dotenv.env['APP_ENV'];
 
       if (configuredEnvironment != expectedEnvironment) {
         throw StateError(
           'Environment mismatch: '
-          'Flutter flavor=$expectedEnvironment, '
+          'Flavor=$expectedEnvironment, '
           'APP_ENV=$configuredEnvironment.',
         );
       }
+
+      _apiUrl = dotenv.env['API_URL'];
+      _ivUtf8 = dotenv.env['IV_UTF8'];
 
       _isInitialized = true;
 
@@ -88,16 +82,12 @@ class Environment {
 
   static String get getApiUrl {
     _checkInitialized();
-
-    return _apiUrl ??
-        _throwMissingEnv('API_URL');
+    return _apiUrl ?? _throwMissingEnv('API_URL');
   }
 
   static String get getIVUtf8 {
     _checkInitialized();
-
-    return _ivUtf8 ??
-        _throwMissingEnv('IV_UTF8');
+    return _ivUtf8 ?? _throwMissingEnv('IV_UTF8');
   }
 
   static void _checkInitialized() {

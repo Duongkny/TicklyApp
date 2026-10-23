@@ -65,3 +65,19 @@ android/.gradle/
 key.properties
 *.pem
 *.p12
+
+# Node.js / Firebase Cloud Functions
+node_modules/
+functions/node_modules/
+
+# Firebase local cache
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
+
+# Local configuration
+functions/.env
+functions/.env.*
+functions/.secret.local

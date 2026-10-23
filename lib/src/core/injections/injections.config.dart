@@ -10,6 +10,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 
+import 'package:cloud_firestore/cloud_firestore.dart' as _i975;
 import 'package:firebase_auth/firebase_auth.dart' as _i59;
 import 'package:firebase_messaging/firebase_messaging.dart' as _i892;
 import 'package:get_it/get_it.dart' as _i174;
@@ -43,6 +44,24 @@ import 'package:tickly/src/features/auth/domain/usecases/sign_up_usecases.dart'
     as _i564;
 import 'package:tickly/src/features/auth/presentation/bloc/auth_bloc.dart'
     as _i429;
+import 'package:tickly/src/features/tasks/data/datasource/task_remote_data_source.dart'
+    as _i740;
+import 'package:tickly/src/features/tasks/data/repos/task_repository_impl.dart'
+    as _i1020;
+import 'package:tickly/src/features/tasks/domain/repos/task_repository.dart'
+    as _i932;
+import 'package:tickly/src/features/tasks/domain/usecases/create_task_usecase.dart'
+    as _i616;
+import 'package:tickly/src/features/tasks/domain/usecases/delete_task_usecase.dart'
+    as _i765;
+import 'package:tickly/src/features/tasks/domain/usecases/get_tasks_usecase.dart'
+    as _i647;
+import 'package:tickly/src/features/tasks/domain/usecases/toggle_task_usecase.dart'
+    as _i895;
+import 'package:tickly/src/features/tasks/domain/usecases/update_task_usecase.dart'
+    as _i353;
+import 'package:tickly/src/features/tasks/presentation/bloc/task_bloc.dart'
+    as _i877;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
@@ -59,11 +78,23 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i974.Logger>(() => registerModule.logger);
     gh.lazySingleton<_i59.FirebaseAuth>(() => firebaseModule.firebaseAuth);
+    gh.lazySingleton<_i975.FirebaseFirestore>(
+      () => firebaseModule.firebaseFirestore,
+    );
     gh.lazySingleton<_i271.AuthRemoteDataSource>(
       () => _i271.AuthRemoteDataSource(gh<_i59.FirebaseAuth>()),
     );
     gh.lazySingleton<_i470.AuthRepository>(
       () => _i405.AuthRepositoryImpl(gh<_i271.AuthRemoteDataSource>()),
+    );
+    gh.lazySingleton<_i740.TaskRemoteDataSource>(
+      () => _i740.TaskRemoteDataSource(
+        gh<_i975.FirebaseFirestore>(),
+        gh<_i59.FirebaseAuth>(),
+      ),
+    );
+    gh.lazySingleton<_i932.TaskRepository>(
+      () => _i1020.TaskRepositoryImpl(gh<_i740.TaskRemoteDataSource>()),
     );
     gh.factory<_i397.GetCurrentUser>(
       () => _i397.GetCurrentUser(gh<_i470.AuthRepository>()),
@@ -97,6 +128,30 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i731.ObserveAuthState>(),
         gh<_i1056.ReloadUser>(),
         gh<_i747.SignInGoogle>(),
+      ),
+    );
+    gh.factory<_i616.CreateTask>(
+      () => _i616.CreateTask(gh<_i932.TaskRepository>()),
+    );
+    gh.factory<_i765.DeleteTask>(
+      () => _i765.DeleteTask(gh<_i932.TaskRepository>()),
+    );
+    gh.factory<_i647.GetTasks>(
+      () => _i647.GetTasks(gh<_i932.TaskRepository>()),
+    );
+    gh.factory<_i895.ToggleTask>(
+      () => _i895.ToggleTask(gh<_i932.TaskRepository>()),
+    );
+    gh.factory<_i353.UpdateTask>(
+      () => _i353.UpdateTask(gh<_i932.TaskRepository>()),
+    );
+    gh.factory<_i877.TaskBloc>(
+      () => _i877.TaskBloc(
+        gh<_i616.CreateTask>(),
+        gh<_i647.GetTasks>(),
+        gh<_i353.UpdateTask>(),
+        gh<_i765.DeleteTask>(),
+        gh<_i895.ToggleTask>(),
       ),
     );
     return this;

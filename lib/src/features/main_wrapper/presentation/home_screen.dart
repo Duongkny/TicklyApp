@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:tickly/src/core/extensions/context.dart';
+import 'package:tickly/src/core/injections/injections.dart';
+import 'package:tickly/src/features/categories/presentation/bloc/category_bloc.dart';
+import 'package:tickly/src/features/categories/presentation/bloc/category_event.dart';
+import 'package:tickly/src/features/categories/presentation/screens/category_screen.dart';
 import 'package:tickly/src/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:tickly/src/features/tasks/presentation/bloc/task_event.dart';
 import 'package:tickly/src/features/tasks/presentation/bloc/task_state.dart';
@@ -65,12 +69,30 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: colorScheme.surface,
 
       // ==================== APP BAR ====================
-      appBar: AppBar(
-        title: const Text('My Tasks'),
-        centerTitle: false,
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-      ),
+  
+appBar: AppBar(
+  title: const Text('My Tasks'),
+  centerTitle: false,
+  backgroundColor: colorScheme.surface,
+  elevation: 0,
+  actions: [
+    IconButton(
+      tooltip: 'Danh mục',
+      icon: const Icon(Icons.folder_outlined),
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => BlocProvider<CategoryBloc>(
+              create: (_) => getIt<CategoryBloc>()
+                ..add(const CategoryStarted()),
+              child: const CategoryScreen(),
+            ),
+          ),
+        );
+      },
+    ),
+  ],
+),
 
       // ==================== BODY ====================
       body: BlocBuilder<TaskBloc, TaskState>(

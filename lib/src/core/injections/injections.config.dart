@@ -44,6 +44,22 @@ import 'package:tickly/src/features/auth/domain/usecases/sign_up_usecases.dart'
     as _i564;
 import 'package:tickly/src/features/auth/presentation/bloc/auth_bloc.dart'
     as _i429;
+import 'package:tickly/src/features/categories/data/datasource/category_remote_data_source.dart'
+    as _i950;
+import 'package:tickly/src/features/categories/data/repos/category_repository_impl.dart'
+    as _i1071;
+import 'package:tickly/src/features/categories/domain/repos/category_repository.dart'
+    as _i318;
+import 'package:tickly/src/features/categories/domain/usecases/create_category_usecase.dart'
+    as _i87;
+import 'package:tickly/src/features/categories/domain/usecases/delete_category_usecase.dart'
+    as _i728;
+import 'package:tickly/src/features/categories/domain/usecases/get_categories_usecase.dart'
+    as _i556;
+import 'package:tickly/src/features/categories/domain/usecases/update_category_usecase.dart'
+    as _i702;
+import 'package:tickly/src/features/categories/presentation/bloc/category_bloc.dart'
+    as _i675;
 import 'package:tickly/src/features/tasks/data/datasource/task_remote_data_source.dart'
     as _i740;
 import 'package:tickly/src/features/tasks/data/repos/task_repository_impl.dart'
@@ -81,6 +97,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i975.FirebaseFirestore>(
       () => firebaseModule.firebaseFirestore,
     );
+    gh.lazySingleton<_i950.CategoryRemoteDataSource>(
+      () => _i950.CategoryRemoteDataSource(
+        gh<_i975.FirebaseFirestore>(),
+        gh<_i59.FirebaseAuth>(),
+      ),
+    );
     gh.lazySingleton<_i271.AuthRemoteDataSource>(
       () => _i271.AuthRemoteDataSource(gh<_i59.FirebaseAuth>()),
     );
@@ -95,6 +117,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i932.TaskRepository>(
       () => _i1020.TaskRepositoryImpl(gh<_i740.TaskRemoteDataSource>()),
+    );
+    gh.lazySingleton<_i318.CategoryRepository>(
+      () => _i1071.CategoryRepositoryImpl(gh<_i950.CategoryRemoteDataSource>()),
     );
     gh.factory<_i397.GetCurrentUser>(
       () => _i397.GetCurrentUser(gh<_i470.AuthRepository>()),
@@ -144,6 +169,26 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i353.UpdateTask>(
       () => _i353.UpdateTask(gh<_i932.TaskRepository>()),
+    );
+    gh.factory<_i87.CreateCategory>(
+      () => _i87.CreateCategory(gh<_i318.CategoryRepository>()),
+    );
+    gh.factory<_i728.DeleteCategory>(
+      () => _i728.DeleteCategory(gh<_i318.CategoryRepository>()),
+    );
+    gh.factory<_i556.GetCategories>(
+      () => _i556.GetCategories(gh<_i318.CategoryRepository>()),
+    );
+    gh.factory<_i702.UpdateCategory>(
+      () => _i702.UpdateCategory(gh<_i318.CategoryRepository>()),
+    );
+    gh.factory<_i675.CategoryBloc>(
+      () => _i675.CategoryBloc(
+        gh<_i87.CreateCategory>(),
+        gh<_i556.GetCategories>(),
+        gh<_i702.UpdateCategory>(),
+        gh<_i728.DeleteCategory>(),
+      ),
     );
     gh.factory<_i877.TaskBloc>(
       () => _i877.TaskBloc(

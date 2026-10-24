@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:tickly/src/features/categories/presentation/widgets/category_selector.dart';
 import '../../domain/entities/task_entity.dart';
 import '../bloc/task_bloc.dart';
 import '../bloc/task_event.dart';
@@ -23,6 +23,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
 
   late TaskPriority _priority;
   DateTime? _dueDate;
+  String? _categoryId;
 
   @override
   void initState() {
@@ -33,6 +34,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       text: widget.task.description ?? '',
     );
     _priority = widget.task.priority;
+    _categoryId = widget.task.categoryId;
     _dueDate = widget.task.dueDate;
   }
 
@@ -85,7 +87,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       userId: widget.task.userId,
       title: _titleController.text.trim(),
       description: description.isEmpty ? null : description,
-      categoryId: widget.task.categoryId,
+      categoryId: _categoryId,
       priority: _priority,
       status: widget.task.status,
       dueDate: _dueDate,
@@ -147,6 +149,15 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                   labelText: 'Mô tả',
                   border: OutlineInputBorder(),
                 ),
+              ),
+              const SizedBox(height: 24),
+              CategorySelector(
+                selectedCategoryId: _categoryId,
+                onChanged: (categoryId) {
+                  setState(() {
+                    _categoryId = categoryId;
+                  });
+                },
               ),
               const SizedBox(height: 24),
               Text(

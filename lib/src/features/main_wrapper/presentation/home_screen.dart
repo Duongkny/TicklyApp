@@ -1,67 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:tickly/src/features/tasks/presentation/widgets/task_search_field.dart';
 import 'package:tickly/src/core/extensions/context.dart';
-import 'package:tickly/src/core/injections/injections.dart';
+import 'package:tickly/src/features/categories/domain/entities/category_entity.dart';
 import 'package:tickly/src/features/categories/presentation/bloc/category_bloc.dart';
-import 'package:tickly/src/features/categories/presentation/bloc/category_event.dart';
+import 'package:tickly/src/features/categories/presentation/bloc/category_state.dart';
 import 'package:tickly/src/features/categories/presentation/screens/category_screen.dart';
+import 'package:tickly/src/features/categories/presentation/widgets/category_filter.dart';
 import 'package:tickly/src/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:tickly/src/features/tasks/presentation/bloc/task_event.dart';
 import 'package:tickly/src/features/tasks/presentation/bloc/task_state.dart';
 import 'package:tickly/src/features/tasks/presentation/screens/create_task_screen.dart';
 import 'package:tickly/src/features/tasks/presentation/screens/task_detail_screen.dart';
 import 'package:tickly/src/features/tasks/presentation/widgets/task_card.dart';
+import 'package:tickly/src/features/tasks/presentation/utils/task_sort.dart';
+import 'package:tickly/src/features/tasks/presentation/widgets/task_sort_selector.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  // ==================== CREATE TASK ====================
-
-
-void _openCreateTask(BuildContext context) {
-  final taskBloc = context.read<TaskBloc>();
-
-  taskBloc.add(const TaskActionCleared());
-
-  Navigator.of(context).push(
-    MaterialPageRoute<void>(
-      builder: (_) => MultiBlocProvider(
-        providers: [
-          // Dùng lại TaskBloc đang có.
-          BlocProvider<TaskBloc>.value(
-            value: taskBloc,
-          ),
-
-          // Tạo CategoryBloc để lấy danh mục.
-          BlocProvider<CategoryBloc>(
-            create: (_) => getIt<CategoryBloc>()
-              ..add(const CategoryStarted()),
-          ),
-        ],
-        child: const CreateTaskScreen(),
-      ),
-    ),
-  );
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-
-  // ==================== TASK DETAIL ====================
-
-  void _openTaskDetail(BuildContext context, String taskId) {
+class _HomeScreenState extends State<HomeScreen> {
+  // null: tất cả; '': chưa phân loại; ID: danh mục cụ thể.
+  String? _selectedCategoryId;
+  String _searchQuery = '';
+  TaskSortOption _sortOption = TaskSortOption.newest;
+  void _openCreateTask(BuildContext context) {
     final taskBloc = context.read<TaskBloc>();
+    final categoryBloc = context.read<CategoryBloc>();
+
+    taskBloc.add(const TaskActionCleared());
 
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => BlocProvider.value(
-          value: taskBloc,
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider<TaskBloc>.value(value: taskBloc),
+            BlocProvider<CategoryBloc>.value(value: categoryBloc),
+          ],
+          child: const CreateTaskScreen(),
+        ),
+      ),
+    );
+  }
+
+  void _openTaskDetail(BuildContext context, String taskId) {
+    final taskBloc = context.read<TaskBloc>();
+    final categoryBloc = context.read<CategoryBloc>();
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider<TaskBloc>.value(value: taskBloc),
+            BlocProvider<CategoryBloc>.value(value: categoryBloc),
+          ],
           child: TaskDetailScreen(taskId: taskId),
         ),
       ),
     );
   }
 
-  // ==================== TOGGLE TASK ====================
+  void _openCategories(BuildContext context) {
+    final categoryBloc = context.read<CategoryBloc>();
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BlocProvider<CategoryBloc>.value(
+          value: categoryBloc,
+          child: const CategoryScreen(),
+        ),
+      ),
+    );
+  }
 
   void _toggleTask(
     BuildContext context, {
@@ -79,48 +93,26 @@ void _openCreateTask(BuildContext context) {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-
-      // ==================== APP BAR ====================
-  
-appBar: AppBar(
-  title: const Text('My Tasks'),
-  centerTitle: false,
-  backgroundColor: colorScheme.surface,
-  elevation: 0,
-  actions: [
-    IconButton(
-      tooltip: 'Danh mục',
-      icon: const Icon(Icons.folder_outlined),
-      onPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => BlocProvider<CategoryBloc>(
-              create: (_) => getIt<CategoryBloc>()
-                ..add(const CategoryStarted()),
-              child: const CategoryScreen(),
-            ),
+      appBar: AppBar(
+        title: const Text('My Tasks'),
+        backgroundColor: colorScheme.surface,
+        centerTitle: false,
+        actions: [
+          IconButton(
+            tooltip: 'Danh mục',
+            icon: const Icon(Icons.folder_outlined),
+            onPressed: () => _openCategories(context),
           ),
-        );
-      },
-    ),
-  ],
-),
-
-      // ==================== BODY ====================
+        ],
+      ),
       body: BlocBuilder<TaskBloc, TaskState>(
-        builder: (context, state) {
-          // ==================== LOADING ====================
-
-          if (state.status == TaskStatusView.initial ||
-              state.status == TaskStatusView.loading) {
-            return Center(
-              child: CircularProgressIndicator(color: colorScheme.primary),
-            );
+        builder: (context, taskState) {
+          if (taskState.status == TaskStatusView.initial ||
+              taskState.status == TaskStatusView.loading) {
+            return const Center(child: CircularProgressIndicator());
           }
 
-          // ==================== ERROR ====================
-
-          if (state.status == TaskStatusView.failure) {
+          if (taskState.status == TaskStatusView.failure) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -128,30 +120,27 @@ appBar: AppBar(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.error_outline_rounded,
-                      size: 64,
+                      Icons.error_outline,
+                      size: 56,
                       color: colorScheme.error,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       'Không thể tải danh sách công việc',
-                      style: context.textTheme.titleLarge,
                       textAlign: TextAlign.center,
+                      style: context.textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      state.errorMessage ?? 'Đã xảy ra lỗi. Vui lòng thử lại.',
+                      taskState.errorMessage ??
+                          'Đã xảy ra lỗi. Vui lòng thử lại.',
                       textAlign: TextAlign.center,
-                      style: context.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     FilledButton.icon(
-                      onPressed: () {
-                        context.read<TaskBloc>().add(const TaskStarted());
-                      },
-                      icon: const Icon(Icons.refresh_rounded),
+                      onPressed: () =>
+                          context.read<TaskBloc>().add(const TaskStarted()),
+                      icon: const Icon(Icons.refresh),
                       label: const Text('Thử lại'),
                     ),
                   ],
@@ -160,9 +149,7 @@ appBar: AppBar(
             );
           }
 
-          // ==================== EMPTY STATE ====================
-
-          if (state.tasks.isEmpty) {
+          if (taskState.tasks.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -174,24 +161,17 @@ appBar: AppBar(
                       size: 80,
                       color: colorScheme.primary,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     Text(
                       'Chưa có công việc nào',
                       style: context.textTheme.titleLarge,
-                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Hãy thêm công việc đầu tiên của bạn!',
-                      style: context.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                    const Text('Hãy thêm công việc đầu tiên của bạn!'),
                     const SizedBox(height: 24),
                     FilledButton.icon(
                       onPressed: () => _openCreateTask(context),
-                      icon: const Icon(Icons.add_rounded),
+                      icon: const Icon(Icons.add),
                       label: const Text('Tạo công việc'),
                     ),
                   ],
@@ -200,11 +180,8 @@ appBar: AppBar(
             );
           }
 
-          // ==================== TASK LIST ====================
-
           return Column(
             children: [
-              // ==================== PROGRESS ====================
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Card(
@@ -229,7 +206,7 @@ appBar: AppBar(
                               ),
                             ),
                             Text(
-                              '${(state.completionProgress * 100).round()}%',
+                              '${(taskState.completionProgress * 100).round()}%',
                               style: context.textTheme.titleMedium?.copyWith(
                                 color: colorScheme.onPrimaryContainer,
                                 fontWeight: FontWeight.bold,
@@ -239,14 +216,14 @@ appBar: AppBar(
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          '${state.completedCount}/${state.totalTasks} đã hoàn thành',
+                          '${taskState.completedCount}/${taskState.totalTasks} đã hoàn thành',
                           style: context.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onPrimaryContainer,
                           ),
                         ),
                         const SizedBox(height: 16),
                         LinearProgressIndicator(
-                          value: state.completionProgress,
+                          value: taskState.completionProgress,
                           minHeight: 10,
                           borderRadius: BorderRadius.circular(10),
                           backgroundColor: colorScheme.surface,
@@ -257,8 +234,6 @@ appBar: AppBar(
                   ),
                 ),
               ),
-
-              // ==================== TASK COUNT ====================
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
                 child: Row(
@@ -266,42 +241,132 @@ appBar: AppBar(
                   children: [
                     Text(
                       'Danh sách công việc',
-                      style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: context.textTheme.titleMedium,
                     ),
-                    Text(
-                      '${state.totalTasks} công việc',
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
+                    Text('${taskState.totalTasks} công việc'),
                   ],
                 ),
               ),
-
-              // ==================== TASK ITEMS ====================
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                  itemCount: state.tasks.length,
-                  itemBuilder: (context, index) {
-                    final task = state.tasks[index];
+                child: BlocBuilder<CategoryBloc, CategoryState>(
+                  builder: (context, categoryState) {
+                    final categories = categoryState.categories;
+                    final categoryMap = <String, CategoryEntity>{
+                      for (final category in categories) category.id: category,
+                    };
 
-                    final isLoading =
-                        state.actionStatus == TaskActionStatus.loading;
+                    // Nếu bộ lọc tham chiếu một danh mục vừa bị xóa, hiển thị Tất cả.
+                    final filterId =
+                        _selectedCategoryId == null ||
+                            _selectedCategoryId == '' ||
+                            categoryMap.containsKey(_selectedCategoryId)
+                        ? _selectedCategoryId
+                        : null;
 
-                    return TaskCard(
-                      task: task,
-                      enabled: state.actionStatus != TaskActionStatus.loading,
-                      onTap: () => _openTaskDetail(context, task.id),
-                      onToggle: (value) {
-                        _toggleTask(
-                          context,
-                          taskId: task.id,
-                          isCompleted: value,
-                        );
-                      },
+                    final query = _searchQuery.trim().toLowerCase();
+
+                    final filteredTasks = taskState.tasks.where((task) {
+                      final matchesCategory =
+                          filterId == null ||
+                          (filterId.isEmpty
+                              ? task.categoryId == null ||
+                                    task.categoryId!.isEmpty
+                              : task.categoryId == filterId);
+
+                      final matchesSearch =
+                          query.isEmpty ||
+                          task.title.toLowerCase().contains(query) ||
+                          (task.description ?? '').toLowerCase().contains(
+                            query,
+                          );
+
+                      return matchesCategory && matchesSearch;
+                    }).toList();
+                    final sortedTasks = sortTasks(filteredTasks, _sortOption);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: TaskSearchField(
+                            query: _searchQuery,
+                            onChanged: (value) {
+                              setState(() => _searchQuery = value);
+                            },
+                          ),
+                        ),
+                        if (categoryState.status ==
+                                CategoryViewStatus.loading ||
+                            categoryState.status == CategoryViewStatus.initial)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: LinearProgressIndicator(),
+                          )
+                        else if (categoryState.status ==
+                            CategoryViewStatus.failure)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'Không thể tải danh mục; đang hiển thị công việc đã tải.',
+                            ),
+                          )
+                        else
+                          CategoryFilter(
+                            categories: categories,
+                            selectedCategoryId: filterId,
+                            onChanged: (id) =>
+                                setState(() => _selectedCategoryId = id),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                          child: Text(
+                            '${filteredTasks.length} công việc trong bộ lọc',
+                          ),
+                        ),
+                        Expanded(
+                          child: sortedTasks.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'Không tìm thấy công việc phù hợp',
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    0,
+                                    16,
+                                    100,
+                                  ),
+                                  itemCount: sortedTasks.length,
+                                  itemBuilder: (context, index) {
+                                    final task = sortedTasks[index];
+
+                                    final category =
+                                        categoryMap[task.categoryId];
+
+                                    return TaskCard(
+                                      task: task,
+                                      category: category,
+                                      enabled:
+                                          taskState.actionStatus !=
+                                          TaskActionStatus.loading,
+                                      onTap: () =>
+                                          _openTaskDetail(context, task.id),
+                                      onToggle: (value) {
+                                        _toggleTask(
+                                          context,
+                                          taskId: task.id,
+                                          isCompleted: value,
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                        ),
+                      ],
                     );
                   },
                 ),
@@ -310,13 +375,10 @@ appBar: AppBar(
           );
         },
       ),
-
-      // ==================== ADD TASK BUTTON ====================
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openCreateTask(context),
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
-        elevation: 2,
         icon: const Icon(Icons.add_rounded),
         label: const Text('Thêm công việc'),
       ),

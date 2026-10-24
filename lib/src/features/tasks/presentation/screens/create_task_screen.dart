@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:tickly/src/features/categories/presentation/widgets/category_selector.dart';
 import 'package:tickly/src/features/categories/presentation/bloc/category_bloc.dart';
 import 'package:tickly/src/features/categories/presentation/bloc/category_event.dart';
 import 'package:tickly/src/features/categories/presentation/bloc/category_state.dart';
@@ -87,11 +87,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng đăng nhập'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Vui lòng đăng nhập')));
       return;
     }
 
@@ -103,9 +101,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     if (_categoryId != null) {
       if (categoryState.status != CategoryViewStatus.success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Chưa thể xác nhận danh mục đã chọn'),
-          ),
+          const SnackBar(content: Text('Chưa thể xác nhận danh mục đã chọn')),
         );
         return;
       }
@@ -116,11 +112,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
       if (!exists) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Danh mục đã chọn không còn tồn tại',
-            ),
-          ),
+          const SnackBar(content: Text('Danh mục đã chọn không còn tồn tại')),
         );
         return;
       }
@@ -149,9 +141,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       updatedAt: now,
     );
 
-    context.read<TaskBloc>().add(
-      TaskCreateRequested(task),
-    );
+    context.read<TaskBloc>().add(TaskCreateRequested(task));
   }
 
   // ==================== CATEGORY DROPDOWN ====================
@@ -169,9 +159,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             trailing: SizedBox(
               height: 20,
               width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-              ),
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
           );
         }
@@ -185,9 +173,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               const SizedBox(height: 8),
               TextButton.icon(
                 onPressed: () {
-                  context.read<CategoryBloc>().add(
-                    const CategoryStarted(),
-                  );
+                  context.read<CategoryBloc>().add(const CategoryStarted());
                 },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Thử lại'),
@@ -199,9 +185,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         final categories = state.categories;
 
         // Dropdown chỉ nhận ID đang tồn tại.
-        final selectedId = categories.any(
-          (category) => category.id == _categoryId,
-        )
+        final selectedId =
+            categories.any((category) => category.id == _categoryId)
             ? _categoryId
             : null;
 
@@ -221,38 +206,31 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               child: Text('Không có danh mục'),
             ),
 
-            ...categories.map(
-              (category) {
-                return DropdownMenuItem<String>(
-                  value: category.id,
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 7,
-                        backgroundColor: Color(
-                          category.colorValue,
-                        ),
+            ...categories.map((category) {
+              return DropdownMenuItem<String>(
+                value: category.id,
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 7,
+                      backgroundColor: Color(category.colorValue),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        category.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          category.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
           onChanged: (value) {
             setState(() {
-              _categoryId =
-                  value == null || value.isEmpty
-                      ? null
-                      : value;
+              _categoryId = value == null || value.isEmpty ? null : value;
             });
           },
         );
@@ -279,9 +257,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         if (state.actionStatus == TaskActionStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                state.errorMessage ?? 'Không thể tạo công việc',
-              ),
+              content: Text(state.errorMessage ?? 'Không thể tạo công việc'),
             ),
           );
         }
@@ -300,20 +276,17 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               padding: const EdgeInsets.all(20),
               children: [
                 // ==================== TITLE ====================
-
                 TextFormField(
                   controller: _titleController,
                   maxLength: 200,
-                  textCapitalization:
-                      TextCapitalization.sentences,
+                  textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(
                     labelText: 'Tiêu đề công việc',
                     hintText: 'Ví dụ: Học Flutter BLoC',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
-                    if (value == null ||
-                        value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Vui lòng nhập tiêu đề';
                     }
 
@@ -324,7 +297,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 const SizedBox(height: 16),
 
                 // ==================== DESCRIPTION ====================
-
                 TextFormField(
                   controller: _descriptionController,
                   maxLines: 4,
@@ -338,7 +310,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 const SizedBox(height: 24),
 
                 // ==================== CATEGORY ====================
-
                 Text(
                   'Danh mục',
                   style: Theme.of(context).textTheme.titleMedium,
@@ -346,12 +317,18 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
                 const SizedBox(height: 12),
 
-                _buildCategoryDropdown(),
+                CategorySelector(
+                  selectedCategoryId: _categoryId,
+                  onChanged: (categoryId) {
+                    setState(() {
+                      _categoryId = categoryId;
+                    });
+                  },
+                ),
 
                 const SizedBox(height: 24),
 
                 // ==================== PRIORITY ====================
-
                 Text(
                   'Mức độ ưu tiên',
                   style: Theme.of(context).textTheme.titleMedium,
@@ -361,18 +338,12 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
                 SegmentedButton<TaskPriority>(
                   segments: const [
-                    ButtonSegment(
-                      value: TaskPriority.low,
-                      label: Text('Thấp'),
-                    ),
+                    ButtonSegment(value: TaskPriority.low, label: Text('Thấp')),
                     ButtonSegment(
                       value: TaskPriority.medium,
                       label: Text('Vừa'),
                     ),
-                    ButtonSegment(
-                      value: TaskPriority.high,
-                      label: Text('Cao'),
-                    ),
+                    ButtonSegment(value: TaskPriority.high, label: Text('Cao')),
                   ],
                   selected: {_priority},
                   onSelectionChanged: (values) {
@@ -385,7 +356,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 const SizedBox(height: 24),
 
                 // ==================== DUE DATE ====================
-
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(
@@ -397,10 +367,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     _dueDate == null
                         ? 'Chưa chọn'
                         : '${_dueDate!.day.toString().padLeft(2, '0')}/'
-                          '${_dueDate!.month.toString().padLeft(2, '0')}/'
-                          '${_dueDate!.year} '
-                          '${_dueDate!.hour.toString().padLeft(2, '0')}:'
-                          '${_dueDate!.minute.toString().padLeft(2, '0')}',
+                              '${_dueDate!.month.toString().padLeft(2, '0')}/'
+                              '${_dueDate!.year} '
+                              '${_dueDate!.hour.toString().padLeft(2, '0')}:'
+                              '${_dueDate!.minute.toString().padLeft(2, '0')}',
                   ),
                   trailing: _dueDate == null
                       ? const Icon(Icons.chevron_right)
@@ -418,13 +388,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 const SizedBox(height: 32),
 
                 // ==================== CREATE BUTTON ====================
-
                 BlocBuilder<TaskBloc, TaskState>(
                   builder: (context, state) {
                     final isLoading =
                         state.action == TaskAction.create &&
-                        state.actionStatus ==
-                            TaskActionStatus.loading;
+                        state.actionStatus == TaskActionStatus.loading;
 
                     return FilledButton(
                       onPressed: isLoading ? null : _submit,
@@ -435,9 +403,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                           ? const SizedBox(
                               width: 22,
                               height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Text('Tạo công việc'),
                     );

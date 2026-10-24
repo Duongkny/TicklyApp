@@ -98,6 +98,53 @@ class CategoryScreen extends StatelessWidget {
     }
   }
 
+  // ==================== DELETE CATEGORY ====================
+
+  Future<void> _confirmDeleteCategory(
+    BuildContext context,
+    CategoryEntity category,
+  ) async {
+    final bloc = context.read<CategoryBloc>();
+
+    if (bloc.isClosed ||
+        bloc.state.actionStatus == CategoryActionStatus.loading) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Xóa danh mục?'),
+        content: Text(
+          'Bạn có chắc muốn xóa "${category.name}"?\n\n'
+          'Các công việc trong danh mục này sẽ được giữ lại và '
+          'chuyển sang "Chưa phân loại".',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+              foregroundColor: Theme.of(dialogContext).colorScheme.onError,
+            ),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted || bloc.isClosed ||
+        bloc.state.actionStatus == CategoryActionStatus.loading) {
+      return;
+    }
+
+    bloc.add(CategoryDeleteRequested(category.id));
+  }
+
   // ==================== CATEGORY ITEM ====================
 
   Widget _buildCategoryItem(
@@ -150,9 +197,30 @@ class CategoryScreen extends StatelessWidget {
           'Nhấn để chỉnh sửa',
         ),
 
-        trailing: Icon(
-          Icons.edit_outlined,
-          color: colorScheme.onSurfaceVariant,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: 'Chỉnh sửa danh mục',
+              onPressed: isLoading
+                  ? null
+                  : () => _openForm(context, category: category),
+              icon: Icon(
+                Icons.edit_outlined,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            IconButton(
+              tooltip: 'Xóa danh mục',
+              onPressed: isLoading
+                  ? null
+                  : () => _confirmDeleteCategory(context, category),
+              icon: Icon(
+                Icons.delete_outline_rounded,
+                color: colorScheme.error,
+              ),
+            ),
+          ],
         ),
 
         // Mở form chỉnh sửa.
@@ -319,7 +387,7 @@ class CategoryScreen extends StatelessWidget {
                       CategoryActionStatus.failure);
         },
 
-        // Lắng nghe kết quả Create / Update.
+        // Lắng nghe kết quả Create / Update / Delete.
         listener: (context, state) {
           if (state.actionStatus ==
               CategoryActionStatus.success) {

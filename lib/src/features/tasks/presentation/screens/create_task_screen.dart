@@ -27,6 +27,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   TaskPriority _priority = TaskPriority.medium;
   DateTime? _dueDate;
   String? _categoryId;
+  DateTime? _reminderAt;
 
   // ==================== DISPOSE ====================
 
@@ -68,6 +69,49 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         time.hour,
         time.minute,
       );
+    });
+  }
+
+  Future<void> _selectReminder() async {
+    final now = DateTime.now();
+
+    final initial = _reminderAt != null && _reminderAt!.isAfter(now)
+        ? _reminderAt!
+        : now.add(const Duration(minutes: 5));
+
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateUtils.dateOnly(now),
+      lastDate: DateTime(now.year + 10),
+    );
+
+    if (date == null || !mounted) return;
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+
+    if (time == null || !mounted) return;
+
+    final selected = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+
+    if (!selected.isAfter(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Thời gian nhắc nhở phải ở tương lai')),
+      );
+      return;
+    }
+
+    setState(() {
+      _reminderAt = selected;
     });
   }
 
@@ -133,7 +177,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
       // Lưu danh mục đã chọn.
       categoryId: selectedCategoryId,
-
+      reminderAt: _reminderAt,
       priority: _priority,
       status: TaskStatus.pending,
       dueDate: _dueDate,
@@ -385,6 +429,37 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   onTap: _selectDueDate,
                 ),
 
+                const SizedBox(height: 32),
+
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    Icons.notifications_active_outlined,
+                    color: colors.primary,
+                  ),
+                  title: const Text('Nhắc nhở công việc'),
+                  subtitle: Text(
+                    _reminderAt == null
+                        ? 'Chưa đặt nhắc nhở'
+                        : '${_reminderAt!.day.toString().padLeft(2, '0')}/'
+                              '${_reminderAt!.month.toString().padLeft(2, '0')}/'
+                              '${_reminderAt!.year} '
+                              '${_reminderAt!.hour.toString().padLeft(2, '0')}:'
+                              '${_reminderAt!.minute.toString().padLeft(2, '0')}',
+                  ),
+                  trailing: _reminderAt == null
+                      ? const Icon(Icons.chevron_right)
+                      : IconButton(
+                          tooltip: 'Bỏ nhắc nhở',
+                          onPressed: () {
+                            setState(() {
+                              _reminderAt = null;
+                            });
+                          },
+                          icon: const Icon(Icons.close),
+                        ),
+                  onTap: _selectReminder,
+                ),
                 const SizedBox(height: 32),
 
                 // ==================== CREATE BUTTON ====================

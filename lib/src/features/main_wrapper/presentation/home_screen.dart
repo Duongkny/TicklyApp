@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:tickly/src/core/notification/task_reminder_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tickly/src/features/calendar/presentation/screens/calendar_screen.dart';
 import 'package:tickly/src/features/tasks/presentation/widgets/task_search_field.dart';
 import 'package:tickly/src/core/extensions/context.dart';
 import 'package:tickly/src/features/categories/domain/entities/category_entity.dart';
@@ -28,6 +30,24 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedCategoryId;
   String _searchQuery = '';
   TaskSortOption _sortOption = TaskSortOption.newest;
+
+  void _openCalendar(BuildContext context) {
+    final taskBloc = context.read<TaskBloc>();
+    final categoryBloc = context.read<CategoryBloc>();
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider<TaskBloc>.value(value: taskBloc),
+            BlocProvider<CategoryBloc>.value(value: categoryBloc),
+          ],
+          child: const CalendarScreen(),
+        ),
+      ),
+    );
+  }
+
   void _openCreateTask(BuildContext context) {
     final taskBloc = context.read<TaskBloc>();
     final categoryBloc = context.read<CategoryBloc>();
@@ -98,6 +118,54 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: colorScheme.surface,
         centerTitle: false,
         actions: [
+           IconButton(
+      tooltip: 'Test thông báo',
+      icon: const Icon(Icons.notifications_active_outlined),
+      onPressed: () async {
+        try {
+          final service = TaskReminderService.instance;
+
+          final granted = await service.requestPermission();
+
+          if (!context.mounted) return;
+
+          if (!granted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Chưa cấp quyền thông báo'),
+              ),
+            );
+            return;
+          }
+
+          await service.showTestNotification();
+
+          if (!context.mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đã gửi thông báo thử nghiệm'),
+            ),
+          );
+        } catch (error) {
+          debugPrint('Notification test error: $error');
+
+          if (!context.mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Lỗi thông báo: $error'),
+            ),
+          );
+        }
+      },
+    ),
+
+          IconButton(
+            tooltip: 'Lịch công việc',
+            icon: const Icon(Icons.calendar_month_outlined),
+            onPressed: () => _openCalendar(context),
+          ),
           IconButton(
             tooltip: 'Danh mục',
             icon: const Icon(Icons.folder_outlined),

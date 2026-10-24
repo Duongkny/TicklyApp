@@ -260,16 +260,22 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   // ==================== CLEAR ACTION ====================
 
-  void _onActionCleared(TaskActionCleared event, Emitter<TaskState> emit) {
-    emit(
-      state.copyWith(
-        action: TaskAction.none,
-        actionStatus: TaskActionStatus.initial,
-        clearMessages: true,
-      ),
-    );
+void _onActionCleared(
+  TaskActionCleared event,
+  Emitter<TaskState> emit,
+) {
+  if (state.actionStatus == TaskActionStatus.loading) {
+    return;
   }
 
+  emit(
+    state.copyWith(
+      action: TaskAction.none,
+      actionStatus: TaskActionStatus.initial,
+      clearMessages: true,
+    ),
+  );
+}
   // ==================== DISPOSE ====================
 
   @override

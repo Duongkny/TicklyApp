@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tickly/src/features/tasks/presentation/widgets/task_search_field.dart';
@@ -103,6 +104,13 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.folder_outlined),
             onPressed: () => _openCategories(context),
           ),
+          IconButton(
+  tooltip: 'Đăng xuất',
+  icon: const Icon(Icons.logout),
+  onPressed: () async {
+    await FirebaseAuth.instance.signOut();
+  },
+),
         ],
       ),
       body: BlocBuilder<TaskBloc, TaskState>(

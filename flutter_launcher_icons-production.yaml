@@ -1,0 +1,7 @@
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icons/tickly.png"
+  adaptive_icon_background: "#7160BB"
+  adaptive_icon_foreground: "assets/icons/tickly.png"
+  min_sdk_android: 21

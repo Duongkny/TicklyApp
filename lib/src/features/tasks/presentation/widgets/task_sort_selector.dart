@@ -1,3 +1,4 @@
+import 'package:tickly/src/core/extensions/context.dart';
 
 import 'package:flutter/material.dart';
 
@@ -11,13 +12,13 @@ enum TaskSortOption {
 }
 
 extension TaskSortOptionLabel on TaskSortOption {
-  String get label => switch (this) {
-    TaskSortOption.newest => 'Mới nhất',
-    TaskSortOption.oldest => 'Cũ nhất',
-    TaskSortOption.priorityHigh => 'Ưu tiên cao',
-    TaskSortOption.priorityLow => 'Ưu tiên thấp',
-    TaskSortOption.dueSoon => 'Hạn gần nhất',
-    TaskSortOption.dueLate => 'Hạn xa nhất',
+  String label(BuildContext context) => switch (this) {
+    TaskSortOption.newest => context.loc.sortNewest,
+    TaskSortOption.oldest => context.loc.sortOldest,
+    TaskSortOption.priorityHigh => context.loc.sortPriorityHigh,
+    TaskSortOption.priorityLow => context.loc.sortPriorityLow,
+    TaskSortOption.dueSoon => context.loc.sortDueSoon,
+    TaskSortOption.dueLate => context.loc.sortDueLate,
   };
 }
 
@@ -34,7 +35,7 @@ class TaskSortSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<TaskSortOption>(
-      tooltip: 'Sắp xếp công việc',
+      tooltip: context.loc.sortTasks,
       initialValue: value,
       onSelected: onChanged,
       itemBuilder: (context) => [
@@ -47,22 +48,19 @@ class TaskSortSelector extends StatelessWidget {
                   const Icon(Icons.check_rounded, size: 18),
                   const SizedBox(width: 8),
                 ],
-                Text(option.label),
+                Text(option.label(context)),
               ],
             ),
           ),
       ],
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.sort_rounded, size: 20),
             const SizedBox(width: 8),
-            Flexible(child: Text(value.label)),
+            Flexible(child: Text(value.label(context))),
             const Icon(Icons.arrow_drop_down_rounded),
           ],
         ),

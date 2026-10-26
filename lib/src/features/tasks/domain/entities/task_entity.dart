@@ -1,3 +1,4 @@
+
 enum TaskPriority { low, medium, high }
 
 enum TaskStatus { pending, completed }
@@ -13,6 +14,7 @@ class TaskEntity {
     this.status = TaskStatus.pending,
     this.dueDate,
     this.reminderAt,
+    this.completedAt,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -28,6 +30,9 @@ class TaskEntity {
 
   final DateTime? dueDate;
   final DateTime? reminderAt;
+
+  // Thời điểm công việc được hoàn thành.
+  final DateTime? completedAt;
 
   final DateTime createdAt;
   final DateTime updatedAt;

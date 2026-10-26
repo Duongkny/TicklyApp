@@ -1,11 +1,9 @@
-
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:injectable/injectable.dart';
 import 'package:tickly/src/features/auth/data/datasources/auth_remote_data_source.dart';
 
 import '../../domain/entities/app_user.dart';
 import '../../domain/repos/auth_repository.dart';
-import '../datasources/auth_remote_data_source.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -63,10 +61,12 @@ class AuthRepositoryImpl implements AuthRepository {
   // Đăng ký
   @override
   Future<AppUser> signUp({
+    String? displayName,
     required String email,
     required String password,
   }) async {
     final credential = await _remoteDataSource.signUp(
+      displayName: displayName,
       email: email,
       password: password,
     );
@@ -88,9 +88,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   // Quên mật khẩu
   @override
-  Future<void> resetPassword({
-    required String email,
-  }) {
+  Future<void> resetPassword({required String email}) {
     return _remoteDataSource.resetPassword(email);
   }
 
@@ -111,24 +109,19 @@ class AuthRepositoryImpl implements AuthRepository {
 
     final updatedUser = _remoteDataSource.currentUser;
 
-    return updatedUser == null
-        ? null
-        : _mapUser(updatedUser);
+    return updatedUser == null ? null : _mapUser(updatedUser);
   }
 
   @override
-Future<AppUser> signInWithGoogle() async {
-  final credential = await _remoteDataSource.signInWithGoogle();
+  Future<AppUser> signInWithGoogle() async {
+    final credential = await _remoteDataSource.signInWithGoogle();
 
-  final user = credential.user;
+    final user = credential.user;
 
-  if (user == null) {
-    throw StateError('Google Sign-In failed: user is null');
+    if (user == null) {
+      throw StateError('Google Sign-In failed: user is null');
+    }
+
+    return _mapUser(user);
   }
-
-  return _mapUser(user);
-}
-
-
-
 }

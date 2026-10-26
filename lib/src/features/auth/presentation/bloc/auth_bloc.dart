@@ -1,4 +1,4 @@
-
+import 'package:tickly/src/core/localization/app_strings.dart';
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -42,7 +42,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     this._getCurrentUser,
     this._observeAuthState,
     this._reloadUser,
-    this._signInGoogle
+    this._signInGoogle,
   ) : super(const AuthState()) {
     on<AuthStarted>(_onStarted);
     on<AuthUserChanged>(_onUserChanged);
@@ -57,10 +57,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   // ================= AUTH SESSION =================
 
-  Future<void> _onStarted(
-    AuthStarted event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> _onStarted(AuthStarted event, Emitter<AuthState> emit) async {
     await _authSubscription?.cancel();
 
     final currentUser = _getCurrentUser();
@@ -87,10 +84,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
-  void _onUserChanged(
-    AuthUserChanged event,
-    Emitter<AuthState> emit,
-  ) {
+  void _onUserChanged(AuthUserChanged event, Emitter<AuthState> emit) {
     emit(
       state.copyWith(
         status: event.user == null
@@ -116,17 +110,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
 
     try {
-      final user = await _signIn(
-        email: event.email,
-        password: event.password,
-      );
+      final user = await _signIn(email: event.email, password: event.password);
 
       emit(
         state.copyWith(
           status: AuthStatus.authenticated,
           user: user,
           actionStatus: AuthActionStatus.success,
-          successMessage: 'Đăng nhập thành công',
+          successMessage: AppStrings.current.signInSuccess,
         ),
       );
     } catch (e) {
@@ -149,7 +140,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(
         state.copyWith(
           actionStatus: AuthActionStatus.failure,
-          errorMessage: 'Mật khẩu xác nhận không khớp',
+          errorMessage: AppStrings.current.validationPasswordMismatch,
           clearMessages: true,
         ),
       );
@@ -165,6 +156,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       final user = await _signUp(
+        displayName: event.displayName,
         email: event.email,
         password: event.password,
       );
@@ -174,7 +166,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           status: AuthStatus.authenticated,
           user: user,
           actionStatus: AuthActionStatus.success,
-          successMessage: 'Đăng ký thành công',
+          successMessage: AppStrings.current.signUpSuccess,
         ),
       );
     } catch (e) {
@@ -208,7 +200,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           status: AuthStatus.unauthenticated,
           actionStatus: AuthActionStatus.success,
           clearUser: true,
-          successMessage: 'Đăng xuất thành công',
+          successMessage: AppStrings.current.homeSignOutSuccess,
         ),
       );
     } catch (e) {
@@ -240,9 +232,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(
         state.copyWith(
           actionStatus: AuthActionStatus.success,
-          successMessage:
-              'Nếu email hợp lệ, bạn sẽ nhận được '
-              'hướng dẫn đặt lại mật khẩu',
+          successMessage: AppStrings.current.forgotPasswordSuccess,
         ),
       );
     } catch (e) {
@@ -274,7 +264,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(
         state.copyWith(
           actionStatus: AuthActionStatus.success,
-          successMessage: 'Đã gửi email xác minh',
+          successMessage: AppStrings.current.verifyEmailResendSuccess,
         ),
       );
     } catch (e) {
@@ -326,7 +316,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   String _errorMessage(Object error) {
     // Tạm thời dùng thông báo chung để tránh
     // hiển thị lỗi nội bộ Firebase cho người dùng.
-    return 'Thao tác không thành công. Vui lòng thử lại.';
+    return AppStrings.current.actionFailed;
   }
 
   @override
@@ -336,56 +326,56 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onGoogleSignIn(
-  AuthGoogleSignInRequested event,
-  Emitter<AuthState> emit,
-) async {
-  if (state.actionStatus == AuthActionStatus.loading) return;
-
-  emit(
-    state.copyWith(
-      actionStatus: AuthActionStatus.loading,
-      clearMessages: true,
-    ),
-  );
-
-  try {
-    final user = await _signInGoogle();
+    AuthGoogleSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    if (state.actionStatus == AuthActionStatus.loading) return;
 
     emit(
       state.copyWith(
-        status: AuthStatus.authenticated,
-        user: user,
-        actionStatus: AuthActionStatus.success,
-        successMessage: 'Đăng nhập Google thành công',
+        actionStatus: AuthActionStatus.loading,
         clearMessages: true,
       ),
     );
-  } on GoogleSignInException catch (e) {
-    if (e.code == GoogleSignInExceptionCode.canceled) {
+
+    try {
+      final user = await _signInGoogle();
+
       emit(
         state.copyWith(
-          actionStatus: AuthActionStatus.initial,
+          status: AuthStatus.authenticated,
+          user: user,
+          actionStatus: AuthActionStatus.success,
+          successMessage: AppStrings.current.googleSignInSuccess,
           clearMessages: true,
         ),
       );
-      return;
-    }
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        emit(
+          state.copyWith(
+            actionStatus: AuthActionStatus.initial,
+            clearMessages: true,
+          ),
+        );
+        return;
+      }
 
-    emit(
-      state.copyWith(
-        actionStatus: AuthActionStatus.failure,
-        errorMessage: 'Không thể đăng nhập bằng Google',
-        clearMessages: true,
-      ),
-    );
-  } catch (e) {
-    emit(
-      state.copyWith(
-        actionStatus: AuthActionStatus.failure,
-        errorMessage: 'Đăng nhập Google thất bại. Vui lòng thử lại.',
-        clearMessages: true,
-      ),
-    );
+      emit(
+        state.copyWith(
+          actionStatus: AuthActionStatus.failure,
+          errorMessage: AppStrings.current.googleSignInFailure,
+          clearMessages: true,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          actionStatus: AuthActionStatus.failure,
+          errorMessage: AppStrings.current.googleSignInFailure,
+          clearMessages: true,
+        ),
+      );
+    }
   }
-}
 }

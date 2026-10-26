@@ -13,6 +13,7 @@ class TaskModel extends TaskEntity {
     super.status,
     super.dueDate,
     super.reminderAt,
+    super.completedAt,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -31,6 +32,7 @@ class TaskModel extends TaskEntity {
       reminderAt: entity.reminderAt,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      completedAt: entity.completedAt,
     );
   }
 
@@ -56,6 +58,7 @@ class TaskModel extends TaskEntity {
       reminderAt: _dateTime(data['reminderAt']),
       createdAt: _dateTime(data['createdAt']) ?? DateTime.now(),
       updatedAt: _dateTime(data['updatedAt']) ?? DateTime.now(),
+      completedAt: _dateTime(data['completedAt']),
     );
   }
 
@@ -82,6 +85,9 @@ class TaskModel extends TaskEntity {
       'reminderAt': reminderAt == null ? null : Timestamp.fromDate(reminderAt!),
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      'completedAt': completedAt == null
+    ? null
+    : Timestamp.fromDate(completedAt!),
     };
   }
 }

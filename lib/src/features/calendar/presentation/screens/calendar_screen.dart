@@ -1,3 +1,5 @@
+import 'package:tickly/src/core/localization/date_formatting.dart';
+import 'package:tickly/src/core/extensions/context.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,9 +23,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _selectedDate = DateUtils.dateOnly(DateTime.now());
   CalendarViewMode _viewMode = CalendarViewMode.month;
 
-  static const _weekdays = [
-    'CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7',
-  ];
+  List<String> get _weekdays =>
+      MaterialLocalizations.of(context).narrowWeekdays;
 
   bool _sameDay(DateTime a, DateTime b) {
     return DateUtils.isSameDay(a, b);
@@ -31,36 +32,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   DateTime _startOfWeek(DateTime date) {
     final daysFromSunday = date.weekday % 7;
-    return DateUtils.dateOnly(
-      date.subtract(Duration(days: daysFromSunday)),
-    );
+    return DateUtils.dateOnly(date.subtract(Duration(days: daysFromSunday)));
   }
 
   List<DateTime> _visibleDates() {
     if (_viewMode == CalendarViewMode.week) {
       final start = _startOfWeek(_selectedDate);
-      return List.generate(
-        7,
-        (index) => start.add(Duration(days: index)),
-      );
+      return List.generate(7, (index) => start.add(Duration(days: index)));
     }
 
-    final first = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      1,
-    );
+    final first = DateTime(_selectedDate.year, _selectedDate.month, 1);
 
     final start = _startOfWeek(first);
 
-    final last = DateTime(
-      _selectedDate.year,
-      _selectedDate.month + 1,
-      0,
-    );
+    final last = DateTime(_selectedDate.year, _selectedDate.month + 1, 0);
 
-    final daysCount =
-        last.difference(start).inDays + 1;
+    final daysCount = last.difference(start).inDays + 1;
 
     final cellCount = ((daysCount + 6) ~/ 7) * 7;
 
@@ -73,9 +60,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void _movePeriod(int direction) {
     setState(() {
       if (_viewMode == CalendarViewMode.week) {
-        _selectedDate = _selectedDate.add(
-          Duration(days: 7 * direction),
-        );
+        _selectedDate = _selectedDate.add(Duration(days: 7 * direction));
       } else {
         final targetMonth = DateTime(
           _selectedDate.year,
@@ -98,31 +83,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
   }
 
-  String _dateLabel(DateTime date) {
-    String two(int number) =>
-        number.toString().padLeft(2, '0');
+  String _dateLabel(DateTime date) => localizedDate(context, date);
+  String _timeLabel(DateTime date) => localizedTime(context, date);
 
-    return '${two(date.day)}/${two(date.month)}/${date.year}';
-  }
-
-  String _timeLabel(DateTime date) {
-    final local = date.toLocal();
-
-    String two(int number) =>
-        number.toString().padLeft(2, '0');
-
-    return '${two(local.hour)}:${two(local.minute)}';
-  }
-
-  List<TaskEntity> _tasksOnDate(
-    List<TaskEntity> tasks,
-    DateTime date,
-  ) {
+  List<TaskEntity> _tasksOnDate(List<TaskEntity> tasks, DateTime date) {
     final selected = tasks.where((task) {
       final dueDate = task.dueDate?.toLocal();
 
-      return dueDate != null &&
-          _sameDay(dueDate, date);
+      return dueDate != null && _sameDay(dueDate, date);
     }).toList();
 
     selected.sort((a, b) {
@@ -136,10 +104,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return selected;
   }
 
-  void _openTaskDetail(
-    BuildContext context,
-    String taskId,
-  ) {
+  void _openTaskDetail(BuildContext context, String taskId) {
     final taskBloc = context.read<TaskBloc>();
     final categoryBloc = context.read<CategoryBloc>();
 
@@ -147,12 +112,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       MaterialPageRoute<void>(
         builder: (_) => MultiBlocProvider(
           providers: [
-            BlocProvider<TaskBloc>.value(
-              value: taskBloc,
-            ),
-            BlocProvider<CategoryBloc>.value(
-              value: categoryBloc,
-            ),
+            BlocProvider<TaskBloc>.value(value: taskBloc),
+            BlocProvider<CategoryBloc>.value(value: categoryBloc),
           ],
           child: TaskDetailScreen(taskId: taskId),
         ),
@@ -160,10 +121,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildCalendar(
-    BuildContext context,
-    List<TaskEntity> tasks,
-  ) {
+  Widget _buildCalendar(BuildContext context, List<TaskEntity> tasks) {
     final colors = Theme.of(context).colorScheme;
     final today = DateUtils.dateOnly(DateTime.now());
     final visibleDates = _visibleDates();
@@ -194,24 +152,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
             Row(
               children: [
                 IconButton(
-                  tooltip: 'Trước',
+                  tooltip: context.loc.previous,
                   icon: const Icon(Icons.chevron_left),
                   onPressed: () => _movePeriod(-1),
                 ),
                 Expanded(
                   child: Text(
-                    'Tháng ${_selectedDate.month}, '
-                    '${_selectedDate.year}',
+                    MaterialLocalizations.of(
+                      context,
+                    ).formatMonthYear(_selectedDate),
                     textAlign: TextAlign.center,
-                    style: Theme.of(context)
-                        .textTheme.titleMedium
-                        ?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Sau',
+                  tooltip: context.loc.next,
                   icon: const Icon(Icons.chevron_right),
                   onPressed: () => _movePeriod(1),
                 ),
@@ -242,18 +199,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: visibleDates.length,
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 7,
-                    mainAxisSpacing: 4,
-                    crossAxisSpacing: 4,
-                    childAspectRatio: 0.84,
-                  ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                mainAxisSpacing: 4,
+                crossAxisSpacing: 4,
+                childAspectRatio: 0.84,
+              ),
               itemBuilder: (context, index) {
                 final date = visibleDates[index];
 
-                final isSelected =
-                    _sameDay(date, _selectedDate);
+                final isSelected = _sameDay(date, _selectedDate);
 
                 final isToday = _sameDay(date, today);
 
@@ -261,8 +216,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     date.month == _selectedDate.month &&
                     date.year == _selectedDate.year;
 
-                final count =
-                    counts[DateUtils.dateOnly(date)] ?? 0;
+                final count = counts[DateUtils.dateOnly(date)] ?? 0;
 
                 return InkWell(
                   borderRadius: BorderRadius.circular(12),
@@ -273,17 +227,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? colors.primary
-                          : Colors.transparent,
+                      color: isSelected ? colors.primary : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                       border: isToday && !isSelected
                           ? Border.all(color: colors.primary)
                           : null,
                     ),
                     child: Column(
-                      mainAxisAlignment:
-                          MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           '${date.day}',
@@ -294,9 +245,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             color: isSelected
                                 ? colors.onPrimary
                                 : isCurrentMonth
-                                    ? colors.onSurface
-                                    : colors.onSurfaceVariant
-                                        .withValues(alpha: 0.5),
+                                ? colors.onSurface
+                                : colors.onSurfaceVariant.withValues(
+                                    alpha: 0.5,
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 5),
@@ -325,15 +277,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildTaskItem(
-    BuildContext context,
-    TaskEntity task,
-  ) {
+  Widget _buildTaskItem(BuildContext context, TaskEntity task) {
     final colors = Theme.of(context).colorScheme;
     final dueDate = task.dueDate!.toLocal();
 
-    final isOverdue = !task.isCompleted &&
-        dueDate.isBefore(DateTime.now());
+    final isOverdue = !task.isCompleted && dueDate.isBefore(DateTime.now());
 
     return Card(
       elevation: 0,
@@ -348,8 +296,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
           color: task.isCompleted
               ? colors.primary
               : isOverdue
-                  ? colors.error
-                  : colors.onSurfaceVariant,
+              ? colors.error
+              : colors.onSurfaceVariant,
         ),
         title: Text(
           task.title,
@@ -364,12 +312,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         subtitle: Text(
           isOverdue
-              ? 'Quá hạn · ${_timeLabel(dueDate)}'
-              : 'Hạn: ${_timeLabel(dueDate)}',
+              ? context.loc.overdueAt(_timeLabel(dueDate))
+              : context.loc.dueAt(_timeLabel(dueDate)),
           style: TextStyle(
-            color: isOverdue
-                ? colors.error
-                : colors.onSurfaceVariant,
+            color: isOverdue ? colors.error : colors.onSurfaceVariant,
           ),
         ),
         trailing: const Icon(Icons.chevron_right),
@@ -385,15 +331,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Scaffold(
       backgroundColor: colors.surface,
       appBar: AppBar(
-        title: const Text('Lịch công việc'),
+        title: Text(context.loc.calendarTitle),
         actions: [
           IconButton(
-            tooltip: 'Hôm nay',
+            tooltip: context.loc.today,
             icon: const Icon(Icons.today_rounded),
             onPressed: () {
               setState(() {
-                _selectedDate =
-                    DateUtils.dateOnly(DateTime.now());
+                _selectedDate = DateUtils.dateOnly(DateTime.now());
               });
             },
           ),
@@ -403,24 +348,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
         builder: (context, state) {
           if (state.status == TaskStatusView.initial ||
               state.status == TaskStatusView.loading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (state.status == TaskStatusView.failure) {
             return Center(
-              child: Text(
-                state.errorMessage ??
-                    'Không thể tải danh sách công việc.',
-              ),
+              child: Text(state.errorMessage ?? context.loc.taskLoadFailed),
             );
           }
 
-          final selectedTasks = _tasksOnDate(
-            state.tasks,
-            _selectedDate,
-          );
+          final selectedTasks = _tasksOnDate(state.tasks, _selectedDate);
 
           final completedCount = selectedTasks
               .where((task) => task.isCompleted)
@@ -431,16 +368,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
             children: [
               // Chế độ xem.
               SegmentedButton<CalendarViewMode>(
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: CalendarViewMode.month,
                     icon: Icon(Icons.calendar_month),
-                    label: Text('Tháng'),
+                    label: Text(context.loc.calendarMonth),
                   ),
                   ButtonSegment(
                     value: CalendarViewMode.week,
                     icon: Icon(Icons.view_week_outlined),
-                    label: Text('Tuần'),
+                    label: Text(context.loc.calendarWeek),
                   ),
                 ],
                 selected: {_viewMode},
@@ -461,17 +398,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Ngày ${_dateLabel(_selectedDate)}',
+                      context.loc.calendarDate(_dateLabel(_selectedDate)),
                       style: textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                   Text(
-                    '${selectedTasks.length} công việc',
-                    style: TextStyle(
-                      color: colors.onSurfaceVariant,
-                    ),
+                    context.loc.taskCount(selectedTasks.length),
+                    style: TextStyle(color: colors.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -479,19 +414,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
               const SizedBox(height: 8),
 
               Text(
-                '$completedCount/${selectedTasks.length} '
-                'đã hoàn thành',
-                style: TextStyle(
-                  color: colors.onSurfaceVariant,
+                context.loc.completionCount(
+                  completedCount,
+                  selectedTasks.length,
                 ),
+                style: TextStyle(color: colors.onSurfaceVariant),
               ),
 
               const SizedBox(height: 16),
 
               if (selectedTasks.isEmpty)
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 36),
+                  padding: const EdgeInsets.symmetric(vertical: 36),
                   child: Column(
                     children: [
                       Icon(
@@ -501,16 +435,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Không có công việc đến hạn',
+                        context.loc.noTasksDue,
                         style: textTheme.titleMedium,
                       ),
                     ],
                   ),
                 )
               else
-                ...selectedTasks.map(
-                  (task) => _buildTaskItem(context, task),
-                ),
+                ...selectedTasks.map((task) => _buildTaskItem(context, task)),
             ],
           );
         },

@@ -10,10 +10,12 @@ class SignUp {
   const SignUp(this._repository);
 
   Future<AppUser> call({
+    String? displayName,
     required String email,
     required String password,
   }) {
     return _repository.signUp(
+      displayName: displayName,
       email: email,
       password: password,
     );

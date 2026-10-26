@@ -1,6 +1,8 @@
-
+import 'package:tickly/src/core/extensions/context.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../../tasks/presentation/bloc/task_bloc.dart';
+import '../../../tasks/presentation/bloc/task_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/category_entity.dart';
@@ -10,7 +12,8 @@ import '../bloc/category_state.dart';
 import '../widgets/category_form_dialog.dart';
 
 class CategoryScreen extends StatelessWidget {
-  const CategoryScreen({super.key});
+  const CategoryScreen({super.key, this.onCategorySelected});
+  final ValueChanged<String?>? onCategorySelected;
 
   // ==================== OPEN CATEGORY FORM ====================
 
@@ -21,8 +24,7 @@ class CategoryScreen extends StatelessWidget {
     final bloc = context.read<CategoryBloc>();
 
     // Không mở form khi đang thực hiện thao tác CRUD.
-    if (bloc.state.actionStatus ==
-        CategoryActionStatus.loading) {
+    if (bloc.state.actionStatus == CategoryActionStatus.loading) {
       return;
     }
 
@@ -35,9 +37,7 @@ class CategoryScreen extends StatelessWidget {
     final result = await showDialog<CategoryFormResult>(
       context: context,
       builder: (dialogContext) {
-        return CategoryFormDialog(
-          category: category,
-        );
+        return CategoryFormDialog(category: category);
       },
     );
 
@@ -53,11 +53,9 @@ class CategoryScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng đăng nhập'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.loc.signInRequired)));
       return;
     }
 
@@ -76,25 +74,15 @@ class CategoryScreen extends StatelessWidget {
     // ==================== CREATE ====================
 
     if (category == null) {
-      debugPrint(
-        '[Category] Gửi CategoryCreateRequested',
-      );
+      debugPrint('[Category] Gửi CategoryCreateRequested');
 
-      bloc.add(
-        CategoryCreateRequested(entity),
-      );
+      bloc.add(CategoryCreateRequested(entity));
     }
-
     // ==================== UPDATE ====================
-
     else {
-      debugPrint(
-        '[Category] Gửi CategoryUpdateRequested',
-      );
+      debugPrint('[Category] Gửi CategoryUpdateRequested');
 
-      bloc.add(
-        CategoryUpdateRequested(entity),
-      );
+      bloc.add(CategoryUpdateRequested(entity));
     }
   }
 
@@ -114,16 +102,12 @@ class CategoryScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Xóa danh mục?'),
-        content: Text(
-          'Bạn có chắc muốn xóa "${category.name}"?\n\n'
-          'Các công việc trong danh mục này sẽ được giữ lại và '
-          'chuyển sang "Chưa phân loại".',
-        ),
+        title: Text(context.loc.categoryDeleteTitle),
+        content: Text(context.loc.categoryDeleteConfirmation(category.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Hủy'),
+            child: Text(context.loc.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -131,13 +115,15 @@ class CategoryScreen extends StatelessWidget {
               backgroundColor: Theme.of(dialogContext).colorScheme.error,
               foregroundColor: Theme.of(dialogContext).colorScheme.onError,
             ),
-            child: const Text('Xóa'),
+            child: Text(context.loc.commonDelete),
           ),
         ],
       ),
     );
 
-    if (confirmed != true || !context.mounted || bloc.isClosed ||
+    if (confirmed != true ||
+        !context.mounted ||
+        bloc.isClosed ||
         bloc.state.actionStatus == CategoryActionStatus.loading) {
       return;
     }
@@ -160,24 +146,16 @@ class CategoryScreen extends StatelessWidget {
       color: colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: colorScheme.outlineVariant,
-        ),
+        side: BorderSide(color: colorScheme.outlineVariant),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 8,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
 
         // Biểu tượng danh mục.
         leading: CircleAvatar(
           radius: 24,
           backgroundColor: Color(category.colorValue),
-          child: const Icon(
-            Icons.folder_rounded,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.folder_rounded, color: Colors.white),
         ),
 
         // Tên danh mục.
@@ -185,23 +163,26 @@ class CategoryScreen extends StatelessWidget {
           category.name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
 
-        subtitle: const Text(
-          'Nhấn để chỉnh sửa',
+        subtitle: BlocBuilder<TaskBloc, TaskState>(
+          builder: (context, state) => Text(
+            context.loc.taskCount(
+              state.tasks
+                  .where((task) => task.categoryId == category.id)
+                  .length,
+            ),
+          ),
         ),
 
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              tooltip: 'Chỉnh sửa danh mục',
+              tooltip: context.loc.categoryEdit,
               onPressed: isLoading
                   ? null
                   : () => _openForm(context, category: category),
@@ -211,7 +192,7 @@ class CategoryScreen extends StatelessWidget {
               ),
             ),
             IconButton(
-              tooltip: 'Xóa danh mục',
+              tooltip: context.loc.categoryDelete,
               onPressed: isLoading
                   ? null
                   : () => _confirmDeleteCategory(context, category),
@@ -227,10 +208,11 @@ class CategoryScreen extends StatelessWidget {
         onTap: isLoading
             ? null
             : () {
-                _openForm(
-                  context,
-                  category: category,
-                );
+                if (onCategorySelected != null) {
+                  onCategorySelected!(category.id);
+                } else {
+                  _openForm(context, category: category);
+                }
               },
       ),
     );
@@ -238,9 +220,7 @@ class CategoryScreen extends StatelessWidget {
 
   // ==================== EMPTY STATE ====================
 
-  Widget _buildEmptyState(
-    BuildContext context,
-  ) {
+  Widget _buildEmptyState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Center(
@@ -256,29 +236,23 @@ class CategoryScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'Bạn chưa có danh mục nào',
+              context.loc.categoryEmptyTitle,
               textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
-              'Hãy tạo danh mục đầu tiên để '
-              'sắp xếp công việc dễ dàng hơn.',
+              context.loc.categoryEmptyDescription,
               textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () => _openForm(context),
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Tạo danh mục'),
+              label: Text(context.loc.categoryCreate),
             ),
           ],
         ),
@@ -288,10 +262,7 @@ class CategoryScreen extends StatelessWidget {
 
   // ==================== ERROR STATE ====================
 
-  Widget _buildErrorState(
-    BuildContext context,
-    String? errorMessage,
-  ) {
+  Widget _buildErrorState(BuildContext context, String? errorMessage) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Center(
@@ -307,26 +278,21 @@ class CategoryScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Không thể tải danh mục',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge,
+              context.loc.categoryLoadFailed,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
-              errorMessage ??
-                  'Đã xảy ra lỗi. Vui lòng thử lại.',
+              errorMessage ?? context.loc.authUnknownError,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
             FilledButton.icon(
               onPressed: () {
-                context.read<CategoryBloc>().add(
-                  const CategoryStarted(),
-                );
+                context.read<CategoryBloc>().add(const CategoryStarted());
               },
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Thử lại'),
+              label: Text(context.loc.commonRetry),
             ),
           ],
         ),
@@ -344,79 +310,57 @@ class CategoryScreen extends StatelessWidget {
       backgroundColor: colorScheme.surface,
 
       // ==================== APP BAR ====================
-
       appBar: AppBar(
-        title: const Text('Danh mục của tôi'),
+        automaticallyImplyLeading: false,
+        title: Text(context.loc.categoriesTitle),
         backgroundColor: colorScheme.surface,
         centerTitle: false,
       ),
 
       // ==================== ADD BUTTON ====================
-
-      floatingActionButton:
-          BlocBuilder<CategoryBloc, CategoryState>(
+      floatingActionButton: BlocBuilder<CategoryBloc, CategoryState>(
         buildWhen: (previous, current) =>
-            previous.actionStatus !=
-            current.actionStatus,
+            previous.actionStatus != current.actionStatus,
         builder: (context, state) {
-          final isLoading =
-              state.actionStatus ==
-              CategoryActionStatus.loading;
+          final isLoading = state.actionStatus == CategoryActionStatus.loading;
 
           return FloatingActionButton.extended(
-            onPressed: isLoading
-                ? null
-                : () => _openForm(context),
+            onPressed: isLoading ? null : () => _openForm(context),
             backgroundColor: colorScheme.primary,
             foregroundColor: colorScheme.onPrimary,
             icon: const Icon(Icons.add_rounded),
-            label: const Text('Thêm danh mục'),
+            label: Text(context.loc.categoryAdd),
           );
         },
       ),
 
       // ==================== CATEGORY LIST ====================
-
       body: BlocConsumer<CategoryBloc, CategoryState>(
         listenWhen: (previous, current) {
-          return previous.actionStatus !=
-                  current.actionStatus &&
-              (current.actionStatus ==
-                      CategoryActionStatus.success ||
-                  current.actionStatus ==
-                      CategoryActionStatus.failure);
+          return previous.actionStatus != current.actionStatus &&
+              (current.actionStatus == CategoryActionStatus.success ||
+                  current.actionStatus == CategoryActionStatus.failure);
         },
 
         // Lắng nghe kết quả Create / Update / Delete.
         listener: (context, state) {
-          if (state.actionStatus ==
-              CategoryActionStatus.success) {
+          if (state.actionStatus == CategoryActionStatus.success) {
             final message = switch (state.action) {
-              CategoryAction.create =>
-                'Tạo danh mục thành công',
-              CategoryAction.update =>
-                'Cập nhật danh mục thành công',
-              CategoryAction.delete =>
-                'Xóa danh mục thành công',
-              CategoryAction.none =>
-                'Thao tác thành công',
+              CategoryAction.create => context.loc.categoryCreated,
+              CategoryAction.update => context.loc.categoryUpdated,
+              CategoryAction.delete => context.loc.categoryDeleted,
+              CategoryAction.none => context.loc.actionSuccess,
             };
 
-            ScaffoldMessenger.of(context)
-                .showSnackBar(
-              SnackBar(content: Text(message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(message)));
           }
 
-          if (state.actionStatus ==
-              CategoryActionStatus.failure) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(
+          if (state.actionStatus == CategoryActionStatus.failure) {
+            ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  state.errorMessage ??
-                      'Thao tác không thành công',
-                ),
+                content: Text(state.errorMessage ?? context.loc.actionFailed),
               ),
             );
           }
@@ -425,23 +369,15 @@ class CategoryScreen extends StatelessWidget {
         builder: (context, state) {
           // ==================== LOADING ====================
 
-          if (state.status ==
-                  CategoryViewStatus.initial ||
-              state.status ==
-                  CategoryViewStatus.loading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (state.status == CategoryViewStatus.initial ||
+              state.status == CategoryViewStatus.loading) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           // ==================== ERROR ====================
 
-          if (state.status ==
-              CategoryViewStatus.failure) {
-            return _buildErrorState(
-              context,
-              state.errorMessage,
-            );
+          if (state.status == CategoryViewStatus.failure) {
+            return _buildErrorState(context, state.errorMessage);
           }
 
           // ==================== EMPTY ====================
@@ -453,21 +389,26 @@ class CategoryScreen extends StatelessWidget {
           // ==================== LIST ====================
 
           return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(
-              16,
-              16,
-              16,
-              100,
-            ),
-            itemCount: state.categories.length,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            itemCount: state.categories.length + 1,
             itemBuilder: (context, index) {
-              final category =
-                  state.categories[index];
+              if (index == 0) {
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: BlocBuilder<TaskBloc, TaskState>(
+                    builder: (context, tasks) => ListTile(
+                      leading: const Icon(Icons.all_inbox_outlined),
+                      title: Text(context.loc.allTasks),
+                      trailing: Text('${tasks.totalTasks}'),
+                      onTap: () => onCategorySelected?.call(null),
+                    ),
+                  ),
+                );
+              }
+              final category = state.categories[index - 1];
 
               final isLoading =
-                  state.actionStatus ==
-                  CategoryActionStatus.loading;
-
+                  state.actionStatus == CategoryActionStatus.loading;
               return _buildCategoryItem(
                 context,
                 category,

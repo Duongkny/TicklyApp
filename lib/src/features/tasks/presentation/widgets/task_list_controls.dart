@@ -1,25 +1,33 @@
+import 'package:tickly/src/core/extensions/context.dart';
 import 'package:flutter/material.dart';
 import 'package:tickly/src/features/tasks/domain/entities/task_entity.dart';
 
 enum TaskStatusFilter { pending, completed }
 
-enum TaskSortOption { newest, oldest, priorityHigh, priorityLow, dueSoon, dueLate }
+enum TaskSortOption {
+  newest,
+  oldest,
+  priorityHigh,
+  priorityLow,
+  dueSoon,
+  dueLate,
+}
 
 extension TaskStatusFilterText on TaskStatusFilter {
-  String get label => switch (this) {
-    TaskStatusFilter.pending => 'Chưa hoàn thành',
-    TaskStatusFilter.completed => 'Đã hoàn thành',
+  String label(BuildContext context) => switch (this) {
+    TaskStatusFilter.pending => context.loc.statusPending,
+    TaskStatusFilter.completed => context.loc.statusCompleted,
   };
 }
 
 extension TaskSortOptionText on TaskSortOption {
-  String get label => switch (this) {
-    TaskSortOption.newest => 'Mới nhất',
-    TaskSortOption.oldest => 'Cũ nhất',
-    TaskSortOption.priorityHigh => 'Ưu tiên cao',
-    TaskSortOption.priorityLow => 'Ưu tiên thấp',
-    TaskSortOption.dueSoon => 'Hạn gần nhất',
-    TaskSortOption.dueLate => 'Hạn xa nhất',
+  String label(BuildContext context) => switch (this) {
+    TaskSortOption.newest => context.loc.sortNewest,
+    TaskSortOption.oldest => context.loc.sortOldest,
+    TaskSortOption.priorityHigh => context.loc.sortPriorityHigh,
+    TaskSortOption.priorityLow => context.loc.sortPriorityLow,
+    TaskSortOption.dueSoon => context.loc.sortDueSoon,
+    TaskSortOption.dueLate => context.loc.sortDueLate,
   };
 }
 
@@ -45,8 +53,12 @@ List<TaskEntity> sortTaskList(List<TaskEntity> tasks, TaskSortOption option) {
     final result = switch (option) {
       TaskSortOption.newest => b.createdAt.compareTo(a.createdAt),
       TaskSortOption.oldest => a.createdAt.compareTo(b.createdAt),
-      TaskSortOption.priorityHigh => priorityRank(b.priority).compareTo(priorityRank(a.priority)),
-      TaskSortOption.priorityLow => priorityRank(a.priority).compareTo(priorityRank(b.priority)),
+      TaskSortOption.priorityHigh => priorityRank(
+        b.priority,
+      ).compareTo(priorityRank(a.priority)),
+      TaskSortOption.priorityLow => priorityRank(
+        a.priority,
+      ).compareTo(priorityRank(b.priority)),
       TaskSortOption.dueSoon => compareDue(a, b, ascending: true),
       TaskSortOption.dueLate => compareDue(a, b, ascending: false),
     };
@@ -58,7 +70,11 @@ List<TaskEntity> sortTaskList(List<TaskEntity> tasks, TaskSortOption option) {
 }
 
 class TaskStatusFilterBar extends StatelessWidget {
-  const TaskStatusFilterBar({super.key, required this.value, required this.onChanged});
+  const TaskStatusFilterBar({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
   final TaskStatusFilter value;
   final ValueChanged<TaskStatusFilter> onChanged;
 
@@ -70,11 +86,11 @@ class TaskStatusFilterBar extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: TaskStatusFilter.values.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final option = TaskStatusFilter.values[index];
           return ChoiceChip(
-            label: Text(option.label),
+            label: Text(option.label(context)),
             selected: value == option,
             onSelected: (_) => onChanged(option),
           );
@@ -92,7 +108,7 @@ class TaskSortMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<TaskSortOption>(
-      tooltip: 'Sắp xếp công việc',
+      tooltip: context.loc.sortTasks,
       initialValue: value,
       onSelected: onChanged,
       itemBuilder: (_) => TaskSortOption.values.map((option) {
@@ -102,10 +118,12 @@ class TaskSortMenu extends StatelessWidget {
             children: [
               SizedBox(
                 width: 22,
-                child: option == value ? const Icon(Icons.check, size: 18) : null,
+                child: option == value
+                    ? const Icon(Icons.check, size: 18)
+                    : null,
               ),
               const SizedBox(width: 6),
-              Text(option.label),
+              Text(option.label(context)),
             ],
           ),
         );
@@ -117,7 +135,7 @@ class TaskSortMenu extends StatelessWidget {
           children: [
             const Icon(Icons.sort_rounded, size: 19),
             const SizedBox(width: 6),
-            Text(value.label),
+            Text(value.label(context)),
             const Icon(Icons.arrow_drop_down_rounded),
           ],
         ),

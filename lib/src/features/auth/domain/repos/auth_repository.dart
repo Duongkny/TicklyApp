@@ -1,4 +1,3 @@
-
 import '../entities/app_user.dart';
 
 abstract class AuthRepository {
@@ -9,13 +8,11 @@ abstract class AuthRepository {
   Stream<AppUser?> get authStateChanges;
 
   // Đăng nhập
-  Future<AppUser> signIn({
-    required String email,
-    required String password,
-  });
+  Future<AppUser> signIn({required String email, required String password});
 
   // Đăng ký
   Future<AppUser> signUp({
+    String? displayName,
     required String email,
     required String password,
   });
@@ -24,9 +21,7 @@ abstract class AuthRepository {
   Future<void> signOut();
 
   // Quên mật khẩu
-  Future<void> resetPassword({
-    required String email,
-  });
+  Future<void> resetPassword({required String email});
 
   // Gửi email xác minh
   Future<void> sendEmailVerification();

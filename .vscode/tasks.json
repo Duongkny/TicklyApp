@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Tickly: prepare Flutter temp",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/flutter-local.ps1",
+        "-CheckOnly"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

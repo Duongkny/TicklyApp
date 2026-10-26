@@ -1,5 +1,6 @@
-
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/bloc/theme_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -14,7 +15,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appTheme = AppTheme(ThemeData().textTheme);
+    final appTheme = AppTheme(
+      GoogleFonts.interTextTheme(ThemeData().textTheme),
+    );
 
     return ScreenUtilInit(
       designSize: const Size(360, 690),
@@ -32,16 +35,14 @@ class MyApp extends StatelessWidget {
               routerConfig: AppRouter.router,
 
               // Localization
-              locale: Locale(state.selectedLanguage.name),
-              supportedLocales:
-                  AppLocalizations.supportedLocales,
-              localizationsDelegates:
-                  AppLocalizations.localizationsDelegates,
+              locale: state.selectedLanguage.value,
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
 
               // Theme
               theme: appTheme.light(),
               darkTheme: appTheme.dark(),
-              themeMode: ThemeMode.system,
+              themeMode: context.watch<ThemeBloc>().state.selectedTheme.value,
             );
           },
         );

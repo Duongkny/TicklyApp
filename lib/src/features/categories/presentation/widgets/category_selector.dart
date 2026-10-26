@@ -1,3 +1,4 @@
+import 'package:tickly/src/core/extensions/context.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,9 +25,9 @@ class CategorySelector extends StatelessWidget {
       builder: (context, state) {
         if (state.status == CategoryViewStatus.initial ||
             state.status == CategoryViewStatus.loading) {
-          return const ListTile(
+          return ListTile(
             leading: Icon(Icons.folder_outlined),
-            title: Text('Đang tải danh mục...'),
+            title: Text(context.loc.categoriesLoading),
             trailing: SizedBox(
               width: 20,
               height: 20,
@@ -39,13 +40,12 @@ class CategorySelector extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Không thể tải danh mục'),
+              Text(context.loc.categoryLoadFailed),
               TextButton.icon(
-                onPressed: () => context.read<CategoryBloc>().add(
-                  const CategoryStarted(),
-                ),
+                onPressed: () =>
+                    context.read<CategoryBloc>().add(const CategoryStarted()),
                 icon: const Icon(Icons.refresh),
-                label: const Text('Thử lại'),
+                label: Text(context.loc.commonRetry),
               ),
             ],
           );
@@ -56,22 +56,21 @@ class CategorySelector extends StatelessWidget {
           (category) => category.id == selectedCategoryId,
         );
 
-        final dropdownValue =
-            exists ? selectedCategoryId : '';
+        final dropdownValue = exists ? selectedCategoryId : '';
 
         return DropdownButtonFormField<String>(
           key: ValueKey(dropdownValue),
           initialValue: dropdownValue,
           isExpanded: true,
-          decoration: const InputDecoration(
-            labelText: 'Danh mục',
+          decoration: InputDecoration(
+            labelText: context.loc.categoriesTitle,
             prefixIcon: Icon(Icons.folder_outlined),
             border: OutlineInputBorder(),
           ),
           items: [
-            const DropdownMenuItem<String>(
+            DropdownMenuItem<String>(
               value: '',
-              child: Text('Không có danh mục'),
+              child: Text(context.loc.categoryNone),
             ),
             ...categories.map(
               (category) => DropdownMenuItem<String>(
@@ -95,9 +94,8 @@ class CategorySelector extends StatelessWidget {
             ),
           ],
           onChanged: enabled
-              ? (value) => onChanged(
-                    value == null || value.isEmpty ? null : value,
-                  )
+              ? (value) =>
+                    onChanged(value == null || value.isEmpty ? null : value)
               : null,
         );
       },

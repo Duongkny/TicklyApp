@@ -1,3 +1,5 @@
+import 'package:tickly/src/core/localization/date_formatting.dart';
+import 'package:tickly/src/core/extensions/context.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,10 +12,7 @@ import '../bloc/task_event.dart';
 import '../bloc/task_state.dart';
 
 class EditTaskScreen extends StatefulWidget {
-  const EditTaskScreen({
-    super.key,
-    required this.task,
-  });
+  const EditTaskScreen({super.key, required this.task});
 
   final TaskEntity task;
 
@@ -39,9 +38,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   void initState() {
     super.initState();
 
-    _titleController = TextEditingController(
-      text: widget.task.title,
-    );
+    _titleController = TextEditingController(text: widget.task.title);
 
     _descriptionController = TextEditingController(
       text: widget.task.description ?? '',
@@ -64,15 +61,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   // ==================== DATE FORMAT ====================
-
-  String _formatDateTime(DateTime date) {
-    final local = date.toLocal();
-
-    String two(int value) => value.toString().padLeft(2, '0');
-
-    return '${two(local.day)}/${two(local.month)}/${local.year} '
-        '${two(local.hour)}:${two(local.minute)}';
-  }
 
   // ==================== SELECT DUE DATE ====================
 
@@ -115,8 +103,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   Future<void> _selectReminder() async {
     final now = DateTime.now();
 
-    final initial = _reminderAt != null &&
-            _reminderAt!.isAfter(now)
+    final initial = _reminderAt != null && _reminderAt!.isAfter(now)
         ? _reminderAt!.toLocal()
         : now.add(const Duration(minutes: 5));
 
@@ -145,13 +132,9 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     );
 
     if (!selected.isAfter(DateTime.now())) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Thời gian nhắc nhở phải ở tương lai',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.loc.reminderMustBeFuture)));
       return;
     }
 
@@ -174,11 +157,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         !_reminderAt!.isAfter(DateTime.now()) &&
         _reminderAt != widget.task.reminderAt) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Thời gian nhắc nhở mới phải ở tương lai',
-          ),
-        ),
+        SnackBar(content: Text(context.loc.newReminderMustBeFuture)),
       );
       return;
     }
@@ -193,17 +172,14 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       status: widget.task.status,
       dueDate: _dueDate,
       reminderAt: _reminderAt,
+      completedAt: widget.task.completedAt,
       createdAt: widget.task.createdAt,
       updatedAt: DateTime.now(),
     );
 
-    debugPrint(
-      '[EditTask] Saving reminderAt: ${updatedTask.reminderAt}',
-    );
+    debugPrint('[EditTask] Saving reminderAt: ${updatedTask.reminderAt}');
 
-    context.read<TaskBloc>().add(
-      TaskUpdateRequested(updatedTask),
-    );
+    context.read<TaskBloc>().add(TaskUpdateRequested(updatedTask));
   }
 
   // ==================== BUILD ====================
@@ -221,14 +197,10 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       listener: (context, state) {
         if (state.actionStatus == TaskActionStatus.success) {
           Navigator.of(context).pop();
-        } else if (state.actionStatus ==
-            TaskActionStatus.failure) {
+        } else if (state.actionStatus == TaskActionStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                state.errorMessage ??
-                    'Không thể cập nhật công việc',
-              ),
+              content: Text(state.errorMessage ?? context.loc.taskUpdateFailed),
             ),
           );
         }
@@ -236,33 +208,27 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       child: Scaffold(
         backgroundColor: colors.surface,
         appBar: AppBar(
-          title: const Text('Chỉnh sửa công việc'),
+          title: Text(context.loc.taskEdit),
           backgroundColor: colors.surface,
         ),
         body: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              20,
-              20,
-              40,
-            ),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
             children: [
               // ==================== TITLE ====================
-
               TextFormField(
                 controller: _titleController,
                 maxLength: 200,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Tên công việc',
+                decoration: InputDecoration(
+                  labelText: context.loc.taskTitleLabel,
                   prefixIcon: Icon(Icons.task_alt_outlined),
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Vui lòng nhập tên công việc';
+                    return context.loc.taskTitleRequired;
                   }
 
                   return null;
@@ -272,12 +238,11 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
               const SizedBox(height: 16),
 
               // ==================== DESCRIPTION ====================
-
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Mô tả',
+                decoration: InputDecoration(
+                  labelText: context.loc.taskDescriptionLabel,
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(),
                 ),
@@ -286,7 +251,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
               const SizedBox(height: 24),
 
               // ==================== CATEGORY ====================
-
               CategorySelector(
                 selectedCategoryId: _categoryId,
                 onChanged: (categoryId) {
@@ -299,27 +263,23 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
               const SizedBox(height: 24),
 
               // ==================== PRIORITY ====================
-
-              Text(
-                'Mức độ ưu tiên',
-                style: textTheme.titleMedium,
-              ),
+              Text(context.loc.priorityTitle, style: textTheme.titleMedium),
 
               const SizedBox(height: 12),
 
               SegmentedButton<TaskPriority>(
-                segments: const [
+                segments: [
                   ButtonSegment<TaskPriority>(
                     value: TaskPriority.low,
-                    label: Text('Thấp'),
+                    label: Text(context.loc.priorityLow),
                   ),
                   ButtonSegment<TaskPriority>(
                     value: TaskPriority.medium,
-                    label: Text('Vừa'),
+                    label: Text(context.loc.priorityMedium),
                   ),
                   ButtonSegment<TaskPriority>(
                     value: TaskPriority.high,
-                    label: Text('Cao'),
+                    label: Text(context.loc.priorityHigh),
                   ),
                 ],
                 selected: {_priority},
@@ -333,23 +293,22 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
               const SizedBox(height: 24),
 
               // ==================== DUE DATE ====================
-
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(
                   Icons.calendar_month_outlined,
                   color: colors.primary,
                 ),
-                title: const Text('Ngày và giờ hết hạn'),
+                title: Text(context.loc.dueDateTime),
                 subtitle: Text(
                   _dueDate == null
-                      ? 'Chưa chọn'
-                      : _formatDateTime(_dueDate!),
+                      ? context.loc.notSelected
+                      : localizedDateTime(context, _dueDate!),
                 ),
                 trailing: _dueDate == null
                     ? const Icon(Icons.chevron_right)
                     : IconButton(
-                        tooltip: 'Bỏ hạn hoàn thành',
+                        tooltip: context.loc.removeDueDate,
                         icon: const Icon(Icons.close),
                         onPressed: () {
                           setState(() {
@@ -363,23 +322,22 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
               const SizedBox(height: 12),
 
               // ==================== REMINDER ====================
-
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(
                   Icons.notifications_active_outlined,
                   color: colors.primary,
                 ),
-                title: const Text('Nhắc nhở công việc'),
+                title: Text(context.loc.taskReminders),
                 subtitle: Text(
                   _reminderAt == null
-                      ? 'Chưa đặt nhắc nhở'
-                      : _formatDateTime(_reminderAt!),
+                      ? context.loc.reminderNotSet
+                      : localizedDateTime(context, _reminderAt!),
                 ),
                 trailing: _reminderAt == null
                     ? const Icon(Icons.chevron_right)
                     : IconButton(
-                        tooltip: 'Bỏ nhắc nhở',
+                        tooltip: context.loc.removeReminder,
                         icon: const Icon(Icons.close),
                         onPressed: () {
                           setState(() {
@@ -393,13 +351,11 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
               const SizedBox(height: 32),
 
               // ==================== SAVE BUTTON ====================
-
               BlocBuilder<TaskBloc, TaskState>(
                 builder: (context, state) {
                   final isLoading =
                       state.action == TaskAction.update &&
-                      state.actionStatus ==
-                          TaskActionStatus.loading;
+                      state.actionStatus == TaskActionStatus.loading;
 
                   return FilledButton.icon(
                     onPressed: isLoading ? null : _save,
@@ -410,15 +366,13 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.save_outlined),
                     label: Text(
                       isLoading
-                          ? 'Đang lưu...'
-                          : 'Lưu thay đổi',
+                          ? context.loc.commonSaving
+                          : context.loc.saveChanges,
                     ),
                   );
                 },

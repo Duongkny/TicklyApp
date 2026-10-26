@@ -1,5 +1,6 @@
-
+import 'package:tickly/src/core/localization/app_strings.dart';
 import 'dart:async';
+import '../local_storage/app_local_storage.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -12,8 +13,7 @@ import '../../features/tasks/domain/entities/task_entity.dart';
 class TaskReminderService {
   TaskReminderService._();
 
-  static final TaskReminderService instance =
-      TaskReminderService._();
+  static final TaskReminderService instance = TaskReminderService._();
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -23,12 +23,11 @@ class TaskReminderService {
 
   static const String _taskPrefix = 'tickly-task:';
 
-  static const NotificationDetails _notificationDetails =
-      NotificationDetails(
+  static NotificationDetails get _notificationDetails => NotificationDetails(
     android: AndroidNotificationDetails(
       'tickly_task_reminders',
-      'Nhắc nhở công việc',
-      channelDescription: 'Thông báo nhắc nhở từ Tickly',
+      AppStrings.current.taskReminders,
+      channelDescription: AppStrings.current.reminderChannelDescription,
       importance: Importance.high,
       priority: Priority.high,
     ),
@@ -37,28 +36,24 @@ class TaskReminderService {
   // ==================== INITIALIZE ====================
 
   Future<void> initialize() {
-    return _initializationFuture ??= _initializePlugin().catchError(
-      (Object error, StackTrace stackTrace) {
-        _initializationFuture = null;
-        Error.throwWithStackTrace(error, stackTrace);
-      },
-    );
+    return _initializationFuture ??= _initializePlugin().catchError((
+      Object error,
+      StackTrace stackTrace,
+    ) {
+      _initializationFuture = null;
+      Error.throwWithStackTrace(error, stackTrace);
+    });
   }
 
   Future<void> _initializePlugin() async {
     tz.initializeTimeZones();
 
-    final timezoneInfo =
-        await FlutterTimezone.getLocalTimezone();
+    final timezoneInfo = await FlutterTimezone.getLocalTimezone();
 
-    tz.setLocalLocation(
-      tz.getLocation(timezoneInfo.identifier),
-    );
+    tz.setLocalLocation(tz.getLocation(timezoneInfo.identifier));
 
     const settings = InitializationSettings(
-      android: AndroidInitializationSettings(
-        '@mipmap/ic_launcher',
-      ),
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
 
     await _plugin.initialize(settings: settings);
@@ -73,11 +68,10 @@ class TaskReminderService {
 
     final android = _plugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
-    return await android
-            ?.requestNotificationsPermission() ??
-        false;
+    return await android?.requestNotificationsPermission() ?? false;
   }
 
   // ==================== NOTIFICATION ID ====================
@@ -97,14 +91,14 @@ class TaskReminderService {
 
   // Payload chứa dữ liệu dùng để so sánh lịch.
   String _payload(TaskEntity task) {
-    final timestamp =
-        task.reminderAt!.toUtc().millisecondsSinceEpoch;
+    final timestamp = task.reminderAt!.toUtc().millisecondsSinceEpoch;
 
     return '$_taskPrefix'
         '${Uri.encodeComponent(task.userId)}:'
         '${Uri.encodeComponent(task.id)}:'
         '$timestamp:'
-        '${Uri.encodeComponent(task.title)}';
+        '${Uri.encodeComponent(task.title)}:'
+        '${AppStrings.current.localeName}';
   }
 
   // ==================== SCHEDULE ====================
@@ -128,15 +122,11 @@ class TaskReminderService {
 
     await _plugin.zonedSchedule(
       id: id,
-      title: 'Nhắc nhở công việc',
-      body: 'Đến giờ thực hiện: ${task.title}',
-      scheduledDate: tz.TZDateTime.from(
-        reminderAt,
-        tz.local,
-      ),
+      title: AppStrings.current.taskReminders,
+      body: AppStrings.current.reminderBody(task.title),
+      scheduledDate: tz.TZDateTime.from(reminderAt, tz.local),
       notificationDetails: _notificationDetails,
-      androidScheduleMode:
-          AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       payload: _payload(task),
     );
 
@@ -148,23 +138,16 @@ class TaskReminderService {
   Future<void> cancelReminder(TaskEntity task) async {
     await initialize();
 
-    await _plugin.cancel(
-      id: _notificationId(task),
-    );
+    await _plugin.cancel(id: _notificationId(task));
 
     debugPrint('[Reminder] Cancelled: ${task.title}');
   }
 
   // ==================== SYNC ====================
 
-  Future<void> syncReminders(
-    List<TaskEntity> tasks,
-    String userId,
-  ) {
+  Future<void> syncReminders(List<TaskEntity> tasks, String userId) {
     // Xếp hàng các lần đồng bộ để tránh chạy song song.
-    final operation = _syncQueue.then(
-      (_) => _syncNow(tasks, userId),
-    );
+    final operation = _syncQueue.then((_) => _syncNow(tasks, userId));
 
     // Một lần sync lỗi không làm hỏng hàng đợi tiếp theo.
     _syncQueue = operation.then<void>(
@@ -177,39 +160,34 @@ class TaskReminderService {
     return operation;
   }
 
-  Future<void> _syncNow(
-    List<TaskEntity> tasks,
-    String userId,
-  ) async {
+  Future<void> _syncNow(List<TaskEntity> tasks, String userId) async {
     await initialize();
 
     final now = DateTime.now();
 
+    final enabled = AppLocalStorage.get('taskRemindersEnabled') != false;
     final activeTasks = tasks.where((task) {
-      return task.userId == userId &&
+      return enabled &&
+          task.userId == userId &&
           !task.isCompleted &&
           task.reminderAt != null &&
           task.reminderAt!.isAfter(now);
     }).toList();
 
     // Đọc các thông báo còn chờ trên Android.
-    final pending =
-        await _plugin.pendingNotificationRequests();
+    final pending = await _plugin.pendingNotificationRequests();
 
     final pendingById = {
-      for (final notification in pending)
-        notification.id: notification,
+      for (final notification in pending) notification.id: notification,
     };
 
     final wantedById = {
-      for (final task in activeTasks)
-        _notificationId(task): task,
+      for (final task in activeTasks) _notificationId(task): task,
     };
 
     // Hủy những lịch Tickly không còn cần thiết.
     for (final notification in pending) {
-      if (notification.payload?.startsWith(_taskPrefix) !=
-          true) {
+      if (notification.payload?.startsWith(_taskPrefix) != true) {
         continue;
       }
 
@@ -237,9 +215,7 @@ class TaskReminderService {
       await scheduleReminder(task);
     }
 
-    debugPrint(
-      '[Reminder] Synced ${activeTasks.length} tasks',
-    );
+    debugPrint('[Reminder] Synced ${activeTasks.length} tasks');
   }
 
   // ==================== CLEAR ON SIGN OUT ====================
@@ -249,12 +225,10 @@ class TaskReminderService {
     await _syncQueue;
     await initialize();
 
-    final pending =
-        await _plugin.pendingNotificationRequests();
+    final pending = await _plugin.pendingNotificationRequests();
 
     for (final notification in pending) {
-      if (notification.payload?.startsWith(_taskPrefix) ==
-          true) {
+      if (notification.payload?.startsWith(_taskPrefix) == true) {
         await _plugin.cancel(id: notification.id);
       }
     }
@@ -269,8 +243,8 @@ class TaskReminderService {
 
     await _plugin.show(
       id: 2147483647,
-      title: 'Tickly',
-      body: 'Thông báo thử nghiệm hoạt động!',
+      title: AppStrings.current.appName,
+      body: AppStrings.current.reminderTestBody,
       notificationDetails: _notificationDetails,
     );
   }
@@ -280,14 +254,12 @@ class TaskReminderService {
   Future<int> pendingCount() async {
     await initialize();
 
-    final pending =
-        await _plugin.pendingNotificationRequests();
+    final pending = await _plugin.pendingNotificationRequests();
 
     return pending
         .where(
           (notification) =>
-              notification.payload?.startsWith(_taskPrefix) ==
-              true,
+              notification.payload?.startsWith(_taskPrefix) == true,
         )
         .length;
   }

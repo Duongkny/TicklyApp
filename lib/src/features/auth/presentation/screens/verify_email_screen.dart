@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -14,8 +13,7 @@ class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({super.key});
 
   @override
-  State<VerifyEmailScreen> createState() =>
-      _VerifyEmailScreenState();
+  State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
 }
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
@@ -27,9 +25,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
     setState(() => _checking = true);
 
-    context.read<AuthBloc>().add(
-      const AuthReloadUserRequested(),
-    );
+    context.read<AuthBloc>().add(const AuthReloadUserRequested());
   }
 
   void _resendVerification() {
@@ -37,15 +33,11 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
     setState(() => _resending = true);
 
-    context.read<AuthBloc>().add(
-      const AuthEmailVerificationRequested(),
-    );
+    context.read<AuthBloc>().add(const AuthEmailVerificationRequested());
   }
 
   void _signOut() {
-    context.read<AuthBloc>().add(
-      const AuthSignOutRequested(),
-    );
+    context.read<AuthBloc>().add(const AuthSignOutRequested());
 
     context.go(AppRoute.signIn);
   }
@@ -81,58 +73,44 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
           if (state.actionStatus == AuthActionStatus.failure) {
             context.showSnackBarMessage(
-              state.errorMessage ??
-                  'Không thể kiểm tra trạng thái email.',
+              state.errorMessage ?? context.loc.verifyEmailCheckFailure,
               isError: true,
             );
           } else {
-            context.showSnackBarMessage(
-              'Email chưa được xác minh. '
-              'Hãy nhấn liên kết trong hộp thư.',
-            );
+            context.showSnackBarMessage(context.loc.verifyEmailNotVerified);
           }
         } else if (_resending) {
           setState(() => _resending = false);
 
           if (state.actionStatus == AuthActionStatus.failure) {
             context.showSnackBarMessage(
-              state.errorMessage ??
-                  'Không thể gửi lại email xác minh.',
+              state.errorMessage ?? context.loc.verifyEmailResendFailure,
               isError: true,
             );
           } else {
-            context.showSnackBarMessage(
-              'Đã gửi yêu cầu. Hãy kiểm tra email.',
-            );
+            context.showSnackBarMessage(context.loc.verifyEmailResendSuccess);
           }
         }
       },
       builder: (context, state) {
-        final email =
-            state.user?.email ?? 'your email address';
+        final email = state.user?.email ?? context.loc.emailAddressFallback;
 
         final busy = _checking || _resending;
 
         return Scaffold(
           backgroundColor: colors.surface,
           appBar: AppBar(
-            title: const Text('Verify Email'),
+            title: Text(context.loc.verifyEmailTitle),
             automaticallyImplyLeading: false,
           ),
           body: SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 24.w,
-                  vertical: 24.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 440,
-                  ),
+                  constraints: const BoxConstraints(maxWidth: 440),
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Center(
                         child: Container(
@@ -140,8 +118,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                           width: 100.r,
                           decoration: BoxDecoration(
                             color: colors.primaryContainer,
-                            borderRadius:
-                                BorderRadius.circular(28.r),
+                            borderRadius: BorderRadius.circular(28.r),
                           ),
                           child: Icon(
                             Icons.mark_email_unread_outlined,
@@ -154,9 +131,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       SizedBox(height: 32.h),
 
                       Text(
-                        'Verify your email',
-                        style: context.textTheme.headlineMedium
-                            ?.copyWith(
+                        context.loc.verifyEmailHeading,
+                        style: context.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                         textAlign: TextAlign.center,
@@ -165,9 +141,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       SizedBox(height: 12.h),
 
                       Text(
-                        'We sent a verification link to',
-                        style: context.textTheme.bodyMedium
-                            ?.copyWith(
+                        context.loc.verifyEmailSentTo,
+                        style: context.textTheme.bodyMedium?.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
                         textAlign: TextAlign.center,
@@ -178,8 +153,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       Text(
                         email,
                         textAlign: TextAlign.center,
-                        style: context.textTheme.titleMedium
-                            ?.copyWith(
+                        style: context.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: colors.primary,
                         ),
@@ -188,9 +162,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       SizedBox(height: 20.h),
 
                       Text(
-                        'Open your inbox and click the '
-                        'verification link. Then return '
-                        'to Tickly and tap the button below.',
+                        context.loc.verifyEmailDescription,
                         textAlign: TextAlign.center,
                         style: context.textTheme.bodyMedium,
                       ),
@@ -198,29 +170,25 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       SizedBox(height: 36.h),
 
                       FilledButton.icon(
-                        onPressed:
-                            busy ? null : _checkVerification,
+                        onPressed: busy ? null : _checkVerification,
                         icon: _checking
                             ? SizedBox(
                                 width: 20.r,
                                 height: 20.r,
-                                child:
-                                    const CircularProgressIndicator(
+                                child: const CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),
                               )
                             : const Icon(Icons.verified_outlined),
                         label: Text(
                           _checking
-                              ? 'Checking...'
-                              : "I've Verified",
+                              ? context.loc.verifyEmailChecking
+                              : context.loc.verifyEmailCheckButton,
                         ),
                         style: FilledButton.styleFrom(
-                          minimumSize:
-                              Size(double.infinity, 52.h),
+                          minimumSize: Size(double.infinity, 52.h),
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(14.r),
+                            borderRadius: BorderRadius.circular(14.r),
                           ),
                         ),
                       ),
@@ -228,20 +196,17 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       SizedBox(height: 16.h),
 
                       OutlinedButton.icon(
-                        onPressed:
-                            busy ? null : _resendVerification,
+                        onPressed: busy ? null : _resendVerification,
                         icon: const Icon(Icons.refresh),
                         label: Text(
                           _resending
-                              ? 'Sending...'
-                              : 'Resend Verification Email',
+                              ? context.loc.verifyEmailResending
+                              : context.loc.verifyEmailResendButton,
                         ),
                         style: OutlinedButton.styleFrom(
-                          minimumSize:
-                              Size(double.infinity, 52.h),
+                          minimumSize: Size(double.infinity, 52.h),
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(14.r),
+                            borderRadius: BorderRadius.circular(14.r),
                           ),
                         ),
                       ),
@@ -250,9 +215,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
                       TextButton(
                         onPressed: busy ? null : _signOut,
-                        child: const Text(
-                          'Sign Out / Use another account',
-                        ),
+                        child: Text(context.loc.verifyEmailSignOut),
                       ),
                     ],
                   ),

@@ -1,3 +1,4 @@
+import 'package:tickly/src/core/extensions/context.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,10 +18,7 @@ import '../widgets/task_information.dart';
 import 'edit_task_screen.dart';
 
 class TaskDetailScreen extends StatelessWidget {
-  const TaskDetailScreen({
-    super.key,
-    required this.taskId,
-  });
+  const TaskDetailScreen({super.key, required this.taskId});
 
   final String taskId;
 
@@ -29,39 +27,33 @@ class TaskDetailScreen extends StatelessWidget {
   Future<void> _confirmDelete(BuildContext context) async {
     final taskBloc = context.read<TaskBloc>();
 
-    if (taskBloc.state.actionStatus ==
-        TaskActionStatus.loading) {
+    if (taskBloc.state.actionStatus == TaskActionStatus.loading) {
       return;
     }
 
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Xóa công việc?'),
-        content: const Text(
-          'Bạn có chắc muốn xóa công việc này?\n\n'
-          'Công việc sẽ bị xóa vĩnh viễn.',
-        ),
+        title: Text(context.loc.taskDeleteTitle),
+        content: Text(context.loc.taskDeleteConfirmation),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop(false);
             },
-            child: const Text('Hủy'),
+            child: Text(context.loc.commonCancel),
           ),
           FilledButton(
             onPressed: () {
               Navigator.of(dialogContext).pop(true);
             },
-            child: const Text('Xóa'),
+            child: Text(context.loc.commonDelete),
           ),
         ],
       ),
     );
 
-    if (shouldDelete != true ||
-        !context.mounted ||
-        taskBloc.isClosed) {
+    if (shouldDelete != true || !context.mounted || taskBloc.isClosed) {
       return;
     }
 
@@ -70,14 +62,10 @@ class TaskDetailScreen extends StatelessWidget {
 
   // ==================== EDIT TASK ====================
 
-  void _openEditTask(
-    BuildContext context,
-    TaskEntity task,
-  ) {
+  void _openEditTask(BuildContext context, TaskEntity task) {
     final taskBloc = context.read<TaskBloc>();
 
-    if (taskBloc.state.actionStatus ==
-        TaskActionStatus.loading) {
+    if (taskBloc.state.actionStatus == TaskActionStatus.loading) {
       return;
     }
 
@@ -89,15 +77,13 @@ class TaskDetailScreen extends StatelessWidget {
         builder: (_) => MultiBlocProvider(
           providers: [
             // Dùng lại TaskBloc.
-            BlocProvider<TaskBloc>.value(
-              value: taskBloc,
-            ),
+            BlocProvider<TaskBloc>.value(value: taskBloc),
 
             // Giữ cách tạo CategoryBloc riêng
             // đã hoạt động với EditTaskScreen.
             BlocProvider<CategoryBloc>(
-              create: (_) => getIt<CategoryBloc>()
-                ..add(const CategoryStarted()),
+              create: (_) =>
+                  getIt<CategoryBloc>()..add(const CategoryStarted()),
             ),
           ],
           child: EditTaskScreen(task: task),
@@ -108,24 +94,15 @@ class TaskDetailScreen extends StatelessWidget {
 
   // ==================== TOGGLE TASK ====================
 
-  void _toggleTask(
-    BuildContext context,
-    bool isCompleted,
-  ) {
+  void _toggleTask(BuildContext context, bool isCompleted) {
     context.read<TaskBloc>().add(
-      TaskToggleRequested(
-        taskId: taskId,
-        isCompleted: isCompleted,
-      ),
+      TaskToggleRequested(taskId: taskId, isCompleted: isCompleted),
     );
   }
 
   // ==================== CATEGORY SECTION ====================
 
-  Widget _buildCategorySection(
-    BuildContext context,
-    TaskEntity task,
-  ) {
+  Widget _buildCategorySection(BuildContext context, TaskEntity task) {
     final colors = Theme.of(context).colorScheme;
 
     return BlocBuilder<CategoryBloc, CategoryState>(
@@ -143,33 +120,24 @@ class TaskDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Danh mục',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              context.loc.categoriesTitle,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
 
             if (selectedCategory != null)
-              CategoryBadge(
-                category: selectedCategory,
-              )
-            else if (categoryState.status ==
-                    CategoryViewStatus.loading ||
-                categoryState.status ==
-                    CategoryViewStatus.initial)
-              const Text('Đang tải danh mục...')
+              CategoryBadge(category: selectedCategory)
+            else if (categoryState.status == CategoryViewStatus.loading ||
+                categoryState.status == CategoryViewStatus.initial)
+              Text(context.loc.categoriesLoading)
             else
               Text(
                 task.categoryId == null
-                    ? 'Chưa phân loại'
-                    : 'Không tìm thấy danh mục',
-                style: TextStyle(
-                  color: colors.onSurfaceVariant,
-                ),
+                    ? context.loc.uncategorized
+                    : context.loc.categoryNotFound,
+                style: TextStyle(color: colors.onSurfaceVariant),
               ),
           ],
         );
@@ -185,15 +153,13 @@ class TaskDetailScreen extends StatelessWidget {
 
     return BlocListener<TaskBloc, TaskState>(
       listenWhen: (previous, current) {
-        return previous.actionStatus !=
-                current.actionStatus ||
+        return previous.actionStatus != current.actionStatus ||
             previous.action != current.action;
       },
       listener: (context, state) {
         // Xóa thành công.
         if (state.action == TaskAction.delete &&
-            state.actionStatus ==
-                TaskActionStatus.success) {
+            state.actionStatus == TaskActionStatus.success) {
           if (context.mounted) {
             Navigator.of(context).pop();
           }
@@ -201,14 +167,10 @@ class TaskDetailScreen extends StatelessWidget {
 
         // Xóa thất bại.
         if (state.action == TaskAction.delete &&
-            state.actionStatus ==
-                TaskActionStatus.failure) {
+            state.actionStatus == TaskActionStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                state.errorMessage ??
-                    'Không thể xóa công việc',
-              ),
+              content: Text(state.errorMessage ?? context.loc.taskDeleteFailed),
             ),
           );
         }
@@ -228,20 +190,14 @@ class TaskDetailScreen extends StatelessWidget {
 
           if (task == null) {
             return Scaffold(
-              appBar: AppBar(
-                title: const Text('Chi tiết công việc'),
-              ),
-              body: const Center(
-                child: Text('Không tìm thấy công việc'),
-              ),
+              appBar: AppBar(title: Text(context.loc.taskDetails)),
+              body: Center(child: Text(context.loc.taskNotFound)),
             );
           }
 
           final currentTask = task;
 
-          final isLoading =
-              state.actionStatus ==
-              TaskActionStatus.loading;
+          final isLoading = state.actionStatus == TaskActionStatus.loading;
 
           // ==================== SCAFFOLD ====================
 
@@ -249,57 +205,40 @@ class TaskDetailScreen extends StatelessWidget {
             backgroundColor: colors.surface,
 
             // ==================== APP BAR ====================
-
             appBar: AppBar(
-              title: const Text('Chi tiết công việc'),
+              title: Text(context.loc.taskDetails),
               backgroundColor: colors.surface,
               actions: [
                 IconButton(
-                  tooltip: 'Chỉnh sửa',
+                  tooltip: context.loc.commonEdit,
                   onPressed: isLoading
                       ? null
-                      : () => _openEditTask(
-                          context,
-                          currentTask,
-                        ),
-                  icon: const Icon(
-                    Icons.edit_outlined,
-                  ),
+                      : () => _openEditTask(context, currentTask),
+                  icon: const Icon(Icons.edit_outlined),
                 ),
                 IconButton(
-                  tooltip: 'Xóa',
-                  onPressed: isLoading
-                      ? null
-                      : () => _confirmDelete(context),
-                  icon: Icon(
-                    Icons.delete_outline,
-                    color: colors.error,
-                  ),
+                  tooltip: context.loc.commonDelete,
+                  onPressed: isLoading ? null : () => _confirmDelete(context),
+                  icon: Icon(Icons.delete_outline, color: colors.error),
                 ),
               ],
             ),
 
             // ==================== BODY ====================
-
             body: ListView(
               padding: const EdgeInsets.all(20),
               children: [
                 // ==================== TITLE ====================
-
                 Text(
                   currentTask.title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
 
                 const SizedBox(height: 16),
 
                 // ==================== STATUS ====================
-
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Chip(
@@ -314,8 +253,8 @@ class TaskDetailScreen extends StatelessWidget {
                     ),
                     label: Text(
                       currentTask.isCompleted
-                          ? 'Đã hoàn thành'
-                          : 'Chưa hoàn thành',
+                          ? context.loc.statusCompleted
+                          : context.loc.statusPending,
                     ),
                   ),
                 ),
@@ -323,30 +262,22 @@ class TaskDetailScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // ==================== DESCRIPTION ====================
-
                 Text(
-                  'Mô tả',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  context.loc.taskDescriptionLabel,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
 
                 const SizedBox(height: 8),
 
                 Text(
-                  currentTask.description?.trim().isNotEmpty ==
-                          true
+                  currentTask.description?.trim().isNotEmpty == true
                       ? currentTask.description!
-                      : 'Chưa có mô tả',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
+                      : context.loc.taskNoDescription,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
                 ),
 
                 const SizedBox(height: 24),
@@ -354,36 +285,26 @@ class TaskDetailScreen extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 // ==================== CATEGORY ====================
-
-                _buildCategorySection(
-                  context,
-                  currentTask,
-                ),
+                _buildCategorySection(context, currentTask),
 
                 const SizedBox(height: 24),
                 const Divider(),
                 const SizedBox(height: 20),
 
                 // ==================== TASK INFORMATION ====================
-
-                TaskInformation(
-                  task: currentTask,
-                ),
+                TaskInformation(task: currentTask),
 
                 const SizedBox(height: 24),
                 const Divider(),
 
                 // ==================== COMPLETE SWITCH ====================
-
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
-                    'Đánh dấu hoàn thành',
-                  ),
+                  title: Text(context.loc.markCompleted),
                   subtitle: Text(
                     currentTask.isCompleted
-                        ? 'Công việc đã hoàn thành'
-                        : 'Công việc chưa hoàn thành',
+                        ? context.loc.taskIsCompleted
+                        : context.loc.taskIsPending,
                   ),
                   value: currentTask.isCompleted,
                   onChanged: isLoading

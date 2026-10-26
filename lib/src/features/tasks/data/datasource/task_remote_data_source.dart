@@ -94,17 +94,25 @@ class TaskRemoteDataSource {
 
   // ==================== COMPLETE ====================
 
-  Future<void> toggleTask({
-    required String taskId,
-    required bool isCompleted,
-  }) async {
-    await _tasks.doc(taskId).update({
-      'status': isCompleted
-          ? TaskStatus.completed.name
-          : TaskStatus.pending.name,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
+ 
+Future<void> toggleTask({
+  required String taskId,
+  required bool isCompleted,
+}) async {
+  await _tasks.doc(taskId).update({
+    'status': isCompleted
+        ? TaskStatus.completed.name
+        : TaskStatus.pending.name,
+
+    // Hoàn thành: lưu thời điểm từ Firestore Server.
+    // Bỏ hoàn thành: xóa thời điểm hoàn thành.
+    'completedAt': isCompleted
+        ? FieldValue.serverTimestamp()
+        : null,
+
+    'updatedAt': FieldValue.serverTimestamp(),
+  });
+}
 
   // ==================== DELETE ====================
 

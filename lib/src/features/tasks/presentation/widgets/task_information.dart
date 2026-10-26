@@ -1,18 +1,16 @@
+import 'package:tickly/src/core/extensions/context.dart';
 
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/task_entity.dart';
 
 class TaskInformation extends StatelessWidget {
-  const TaskInformation({
-    super.key,
-    required this.task,
-  });
+  const TaskInformation({super.key, required this.task});
 
   final TaskEntity task;
 
   String _formatDate(BuildContext context, DateTime? date) {
-    if (date == null) return 'Chưa đặt';
+    if (date == null) return context.loc.notSet;
 
     final localDate = date.toLocal();
     final material = MaterialLocalizations.of(context);
@@ -26,11 +24,11 @@ class TaskInformation extends StatelessWidget {
     return '$dateText, $timeText';
   }
 
-  String get _priorityLabel {
+  String _priorityLabel(BuildContext context) {
     return switch (task.priority) {
-      TaskPriority.low => 'Thấp',
-      TaskPriority.medium => 'Trung bình',
-      TaskPriority.high => 'Cao',
+      TaskPriority.low => context.loc.priorityLow,
+      TaskPriority.medium => context.loc.priorityMedium,
+      TaskPriority.high => context.loc.priorityHigh,
     };
   }
 
@@ -51,36 +49,37 @@ class TaskInformation extends StatelessWidget {
       children: [
         _InformationRow(
           icon: Icons.flag_outlined,
-          label: 'Mức độ ưu tiên',
-          value: _priorityLabel,
+          label: context.loc.priorityTitle,
+          value: _priorityLabel(context),
           valueColor: _priorityColor(colors),
         ),
         const SizedBox(height: 18),
 
         _InformationRow(
           icon: Icons.calendar_today_outlined,
-          label: 'Hạn hoàn thành',
+          label: context.loc.dueDate,
           value: _formatDate(context, task.dueDate),
         ),
         const SizedBox(height: 18),
 
         _InformationRow(
           icon: Icons.notifications_none_rounded,
-          label: 'Nhắc nhở',
+          label: context.loc.reminderLabel,
           value: _formatDate(context, task.reminderAt),
         ),
+
         const SizedBox(height: 18),
 
         _InformationRow(
           icon: Icons.access_time_rounded,
-          label: 'Ngày tạo',
+          label: context.loc.createdDate,
           value: _formatDate(context, task.createdAt),
         ),
         const SizedBox(height: 18),
 
         _InformationRow(
           icon: Icons.update_rounded,
-          label: 'Cập nhật lần cuối',
+          label: context.loc.lastUpdated,
           value: _formatDate(context, task.updatedAt),
         ),
       ],
@@ -109,11 +108,7 @@ class _InformationRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 22,
-          color: colors.onSurfaceVariant,
-        ),
+        Icon(icon, size: 22, color: colors.onSurfaceVariant),
         const SizedBox(width: 14),
         Expanded(
           child: Column(

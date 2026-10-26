@@ -1,4 +1,3 @@
-
 import 'package:go_router/go_router.dart';
 
 import 'package:tickly/src/core/auth/auth_refresh_notifier.dart';
@@ -9,11 +8,10 @@ import 'package:tickly/src/router/router.main.dart';
 class AppRouter {
   AppRouter._();
 
-  static final AuthRefreshNotifier _authNotifier =
-      AuthRefreshNotifier();
+  static final AuthRefreshNotifier _authNotifier = AuthRefreshNotifier();
 
   static final GoRouter router = GoRouter(
-    initialLocation: AppRoute.signIn,
+    initialLocation: AppRoute.welcome,
     debugLogDiagnostics: true,
 
     refreshListenable: _authNotifier,
@@ -32,24 +30,25 @@ class AppRouter {
 
       // Chưa đăng nhập thì không cho vào Home.
       if (user == null) {
-        if (isHome) {
+        if (isHome || location == AppRoute.verifyEmail) {
           return AppRoute.signIn;
         }
 
         return null;
       }
 
+      if (isHome && !user.emailVerified) {
+        return AppRoute.verifyEmail;
+      }
+
       // Đã đăng nhập thì không cần vào Sign In nữa.
-      if (isSignIn) {
+      if (isSignIn || location == AppRoute.welcome) {
         return AppRoute.home;
       }
 
       return null;
     },
 
-    routes: [
-      ...mainRoutes(),
-      ...authRoutes(),
-    ],
+    routes: [...mainRoutes(), ...authRoutes()],
   );
 }

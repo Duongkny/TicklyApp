@@ -2,9 +2,6 @@ import 'dart:async';
 
 import 'package:hive_ce_flutter/adapters.dart';
 
-import 'package:tickly/src/core/extensions/device_id.dart';
-
-import '../../local_storage/app_local_storage.dart';
 // import '../../notification/FirebaseMessage.dart';
 
 class HiveProvider {

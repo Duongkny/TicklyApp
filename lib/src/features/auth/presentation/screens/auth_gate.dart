@@ -1,3 +1,4 @@
+import 'package:tickly/src/core/extensions/context.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -18,20 +19,15 @@ class AuthGate extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState ==
-            ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
         if (snapshot.hasError) {
-          return const Scaffold(
-            body: Center(
-              child: Text('Không thể kiểm tra đăng nhập'),
-            ),
+          return Scaffold(
+            body: Center(child: Text(context.loc.authCheckFailed)),
           );
         }
 

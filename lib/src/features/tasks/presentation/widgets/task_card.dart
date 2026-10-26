@@ -1,3 +1,5 @@
+import 'package:tickly/src/core/localization/date_formatting.dart';
+import 'package:tickly/src/core/extensions/context.dart';
 import 'package:flutter/material.dart';
 import 'package:tickly/src/features/categories/domain/entities/category_entity.dart';
 import 'package:tickly/src/features/categories/presentation/widgets/category_badge.dart';
@@ -20,24 +22,17 @@ class TaskCard extends StatelessWidget {
   final bool enabled;
   final CategoryEntity? category;
 
-  String get _priorityText => switch (task.priority) {
-        TaskPriority.low => 'Thấp',
-        TaskPriority.medium => 'Vừa',
-        TaskPriority.high => 'Cao',
-      };
+  String _priorityText(BuildContext context) => switch (task.priority) {
+    TaskPriority.low => context.loc.priorityLow,
+    TaskPriority.medium => context.loc.priorityMedium,
+    TaskPriority.high => context.loc.priorityHigh,
+  };
 
   Color _priorityColor(ColorScheme colors) => switch (task.priority) {
-        TaskPriority.low => colors.tertiary,
-        TaskPriority.medium => colors.primary,
-        TaskPriority.high => colors.error,
-      };
-
-  String _formatDueDate(DateTime value) {
-    final date = value.toLocal();
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    return '$day/$month/${date.year}';
-  }
+    TaskPriority.low => const Color(0xFF3973B9),
+    TaskPriority.medium => const Color(0xFFAD6500),
+    TaskPriority.high => colors.error,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +44,8 @@ class TaskCard extends StatelessWidget {
       elevation: 0,
       color: colors.surfaceContainerLow,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: colors.outlineVariant),
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colors.outlineVariant.withValues(alpha: .35)),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -79,14 +74,14 @@ class TaskCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: task.isCompleted
-                                ? colors.onSurfaceVariant
-                                : colors.onSurface,
-                            decoration: task.isCompleted
-                                ? TextDecoration.lineThrough
-                                : TextDecoration.none,
-                          ),
+                        fontWeight: FontWeight.w600,
+                        color: task.isCompleted
+                            ? colors.onSurfaceVariant
+                            : colors.onSurface,
+                        decoration: task.isCompleted
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                      ),
                     ),
                     if (description != null && description.isNotEmpty) ...[
                       const SizedBox(height: 4),
@@ -95,8 +90,8 @@ class TaskCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colors.onSurfaceVariant,
-                            ),
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
                     ],
                     const SizedBox(height: 8),
@@ -105,16 +100,17 @@ class TaskCard extends StatelessWidget {
                       runSpacing: 6,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        if (category != null) CategoryBadge(category: category!),
+                        if (category != null)
+                          CategoryBadge(category: category!),
                         _MetaLabel(
                           icon: Icons.flag_outlined,
-                          label: _priorityText,
+                          label: _priorityText(context),
                           color: _priorityColor(colors),
                         ),
                         if (task.dueDate != null)
                           _MetaLabel(
                             icon: Icons.event_outlined,
-                            label: _formatDueDate(task.dueDate!),
+                            label: localizedDateTime(context, task.dueDate!),
                             color: colors.onSurfaceVariant,
                           ),
                       ],
@@ -151,9 +147,13 @@ class _MetaLabel extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: color),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
+        Flexible(
+          child: Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: color),
+          ),
         ),
       ],
     );

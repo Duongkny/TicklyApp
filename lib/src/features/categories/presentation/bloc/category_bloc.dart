@@ -1,3 +1,4 @@
+import 'package:tickly/src/core/localization/app_strings.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -69,9 +70,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
 
           if (!isClosed && generation == _watchGeneration) {
             add(
-              const CategorySubscriptionFailed(
-                'Không thể tải danh mục từ Firestore.',
-              ),
+              CategorySubscriptionFailed(AppStrings.current.categoryLoadFailed),
             );
           }
         },
@@ -80,7 +79,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       emit(
         state.copyWith(
           status: CategoryViewStatus.failure,
-          errorMessage: 'Không thể kết nối Firestore: $error',
+          errorMessage: AppStrings.current.connectionFailed,
         ),
       );
     }
@@ -154,7 +153,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
         state.copyWith(
           action: CategoryAction.create,
           actionStatus: CategoryActionStatus.failure,
-          errorMessage: 'Không thể tạo danh mục.',
+          errorMessage: AppStrings.current.categoryCreateFailed,
         ),
       );
     }
@@ -189,7 +188,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
         state.copyWith(
           action: CategoryAction.update,
           actionStatus: CategoryActionStatus.failure,
-          errorMessage: 'Không thể cập nhật danh mục.',
+          errorMessage: AppStrings.current.categoryUpdateFailed,
         ),
       );
     }
@@ -224,7 +223,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
         state.copyWith(
           action: CategoryAction.delete,
           actionStatus: CategoryActionStatus.failure,
-          errorMessage: 'Không thể xóa danh mục.',
+          errorMessage: AppStrings.current.categoryDeleteFailed,
         ),
       );
     }

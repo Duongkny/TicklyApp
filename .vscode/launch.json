@@ -1,4 +1,3 @@
-
 {
   "version": "0.2.0",
   "configurations": [
@@ -11,7 +10,15 @@
       "toolArgs": [
         "--flavor",
         "development"
-      ]
+      ],
+      "env": {
+        "TEMP": "${workspaceFolder}/.dart_tool/tickly-temp",
+        "TMP": "${workspaceFolder}/.dart_tool/tickly-temp",
+        "GRADLE_USER_HOME": "E:/GradleCache/tickly",
+        "ANDROID_USER_HOME": "${workspaceFolder}/.dart_tool/android-user-home",
+        "JAVA_TOOL_OPTIONS": "-Djava.io.tmpdir=E:/FlutterTemp"
+      },
+      "preLaunchTask": "Tickly: prepare Flutter temp"
     },
     {
       "name": "Tickly Production",
@@ -22,7 +29,15 @@
       "toolArgs": [
         "--flavor",
         "production"
-      ]
+      ],
+      "env": {
+        "TEMP": "${workspaceFolder}/.dart_tool/tickly-temp",
+        "TMP": "${workspaceFolder}/.dart_tool/tickly-temp",
+        "GRADLE_USER_HOME": "E:/GradleCache/tickly",
+        "ANDROID_USER_HOME": "${workspaceFolder}/.dart_tool/android-user-home",
+        "JAVA_TOOL_OPTIONS": "-Djava.io.tmpdir=E:/FlutterTemp"
+      },
+      "preLaunchTask": "Tickly: prepare Flutter temp"
     }
   ]
 }

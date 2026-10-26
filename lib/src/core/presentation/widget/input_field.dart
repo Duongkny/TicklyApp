@@ -1,3 +1,4 @@
+import 'package:tickly/src/core/localization/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,7 +25,7 @@ class InputField extends StatefulWidget {
   InputField.dob({
     required TextEditingController controller,
     String? errorText,
-    String hintText = 'Date of Birth',
+    String? hintText,
     Widget? prefixIcon,
     TextInputAction textInputAction = TextInputAction.next,
     Key? key,
@@ -48,7 +49,7 @@ class InputField extends StatefulWidget {
   const InputField.name({
     required TextEditingController controller,
     String? errorText,
-    String hintText = 'Name',
+    String? hintText,
     Widget? prefixIcon,
     TextInputAction textInputAction = TextInputAction.next,
     Key? key,
@@ -67,7 +68,7 @@ class InputField extends StatefulWidget {
   const InputField.number({
     required TextEditingController controller,
     String? errorText,
-    String hintText = 'Number',
+    String? hintText,
     Widget? prefixIcon,
     TextInputAction textInputAction = TextInputAction.next,
     Key? key,
@@ -86,7 +87,7 @@ class InputField extends StatefulWidget {
   const InputField.phone({
     required TextEditingController controller,
     String? errorText,
-    String hintText = 'Number',
+    String? hintText,
     Widget? prefixIcon,
     TextInputAction textInputAction = TextInputAction.next,
     Key? key,
@@ -105,16 +106,18 @@ class InputField extends StatefulWidget {
   const InputField.email({
     required TextEditingController controller,
     String? errorText,
-    String hintText = 'Email',
+    String? hintText,
     Widget? prefixIcon,
     TextInputAction textInputAction = TextInputAction.next,
-    Key? key, required bool enabled,
+    Key? key,
+    required bool enabled,
   }) : this(
          key: key,
          controller: controller,
          textInputAction: textInputAction,
          keyboardType: TextInputType.emailAddress,
          errorText: errorText,
+         enabled: enabled,
          hintText: hintText,
          prefixIcon: prefixIcon,
          autofillHints: const [AutofillHints.email],
@@ -124,11 +127,12 @@ class InputField extends StatefulWidget {
   const InputField.password({
     required TextEditingController controller,
     String? errorText,
-    String hintText = 'Password',
+    String? hintText,
     Widget? prefixIcon,
     TextInputAction textInputAction = TextInputAction.next,
     ValueChanged<String>? onFieldSubmitted,
-    Key? key, required bool enabled,
+    Key? key,
+    required bool enabled,
   }) : this(
          key: key,
          controller: controller,
@@ -136,45 +140,45 @@ class InputField extends StatefulWidget {
          keyboardType: TextInputType.visiblePassword,
          autofillHints: const [AutofillHints.password],
          errorText: errorText,
-          enabled: enabled,
+         enabled: enabled,
          hintText: hintText,
          prefixIcon: prefixIcon,
          validator: Validators.password,
          onFieldSubmitted: onFieldSubmitted,
        );
-InputField.confirmPassword({
-  required TextEditingController controller,
-  required TextEditingController passwordController,
-  String? errorText,
-  String hintText = 'Confirm Password',
-  Widget? prefixIcon,
-  TextInputAction textInputAction = TextInputAction.done,
-  ValueChanged<String>? onFieldSubmitted,
-  bool enabled = true,
-  Key? key,
-}) : this(
-       key: key,
-       controller: controller,
-       textInputAction: textInputAction,
-       keyboardType: TextInputType.visiblePassword,
-       errorText: errorText,
-       hintText: hintText,
-       prefixIcon: prefixIcon,
-       enabled: enabled,
-       autofillHints: const [AutofillHints.newPassword],
-       onFieldSubmitted: onFieldSubmitted,
-       validator: (value) {
-         if (value == null || value.isEmpty) {
-           return 'Vui lòng xác nhận mật khẩu';
-         }
+  InputField.confirmPassword({
+    required TextEditingController controller,
+    required TextEditingController passwordController,
+    String? errorText,
+    String? hintText,
+    Widget? prefixIcon,
+    TextInputAction textInputAction = TextInputAction.done,
+    ValueChanged<String>? onFieldSubmitted,
+    bool enabled = true,
+    Key? key,
+  }) : this(
+         key: key,
+         controller: controller,
+         textInputAction: textInputAction,
+         keyboardType: TextInputType.visiblePassword,
+         errorText: errorText,
+         hintText: hintText ?? AppStrings.current.commonConfirmPassword,
+         prefixIcon: prefixIcon,
+         enabled: enabled,
+         autofillHints: const [AutofillHints.newPassword],
+         onFieldSubmitted: onFieldSubmitted,
+         validator: (value) {
+           if (value == null || value.isEmpty) {
+             return AppStrings.current.validationConfirmPasswordRequired;
+           }
 
-         if (value != passwordController.text) {
-           return 'Mật khẩu xác nhận không khớp';
-         }
+           if (value != passwordController.text) {
+             return AppStrings.current.validationPasswordMismatch;
+           }
 
-         return null;
-       },
-     );
+           return null;
+         },
+       );
   final TextEditingController controller;
   final TextInputAction textInputAction;
   final TextInputType keyboardType;
@@ -243,7 +247,17 @@ class _InputFieldState extends State<InputField> {
           color: context.colorScheme.outline,
         ),
         errorText: widget.errorText,
-        hintText: widget.hintText,
+        hintText:
+            widget.hintText ??
+            switch (widget.keyboardType) {
+              TextInputType.name => context.loc.fullName,
+              TextInputType.emailAddress => context.loc.commonEmail,
+              TextInputType.visiblePassword => context.loc.commonPassword,
+              TextInputType.datetime => context.loc.inputDateOfBirth,
+              TextInputType.number ||
+              TextInputType.phone => context.loc.inputNumber,
+              _ => null,
+            },
         prefixIcon: widget.prefixIcon,
         prefixIconColor: context.colorScheme.primary,
         suffixIconColor: widget.errorText == null

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,13 +14,13 @@ class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() =>
-      _SignUpScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -30,6 +29,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -49,11 +49,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     context.read<AuthBloc>().add(
       AuthSignUpRequested(
+        displayName: _nameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
         confirmPassword: _confirmPasswordController.text,
       ),
     );
+  }
+
+  void _signUpWithGoogle() {
+    if (_signUpPending) return;
+    context.closeKeyboard();
+    setState(() => _signUpPending = true);
+    context.read<AuthBloc>().add(const AuthGoogleSignInRequested());
   }
 
   @override
@@ -83,7 +91,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
         final registrationSucceeded =
             state.actionStatus == AuthActionStatus.success &&
-            state.successMessage == context.loc.signUpSuccess;
+            state.status == AuthStatus.authenticated &&
+            state.user != null;
 
         if (!registrationSucceeded) return;
 
@@ -93,7 +102,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
         if (user == null) {
           context.showSnackBarMessage(
-            'Không thể lấy thông tin tài khoản.',
+            context.loc.accountLoadFailed,
             isError: true,
           );
           return;
@@ -104,9 +113,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           return;
         }
 
-        context.read<AuthBloc>().add(
-          const AuthEmailVerificationRequested(),
-        );
+        context.read<AuthBloc>().add(const AuthEmailVerificationRequested());
 
         context.go(AppRoute.verifyEmail);
       },
@@ -114,27 +121,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
         final isLoading = _signUpPending;
 
         return Scaffold(
+          appBar: AppBar(),
           backgroundColor: colors.surface,
           body: SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 24.w,
-                  vertical: 24.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
                 child: ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(maxWidth: 440),
+                  constraints: const BoxConstraints(maxWidth: 440),
                   child: Form(
                     key: _formKey,
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _buildHeader(context),
 
                         SizedBox(height: 32.h),
 
+                        TextFormField(
+                          controller: _nameController,
+                          enabled: !isLoading,
+                          textCapitalization: TextCapitalization.words,
+                          autofillHints: const [AutofillHints.name],
+                          maxLength: 80,
+                          decoration: InputDecoration(
+                            labelText: context.loc.fullName,
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                              ? context.loc.validationNameRequired
+                              : null,
+                        ),
+                        SizedBox(height: 20.h),
                         // EMAIL
                         Text(
                           context.loc.commonEmail,
@@ -144,9 +163,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                         InputField.email(
                           controller: _emailController,
-                          hintText: 'name@example.com',
-                          prefixIcon:
-                              const Icon(Icons.email_outlined),
+                          hintText: context.loc.signUpEmailHint,
+                          prefixIcon: const Icon(Icons.email_outlined),
                           enabled: !isLoading,
                         ),
 
@@ -162,8 +180,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         InputField.password(
                           controller: _passwordController,
                           hintText: context.loc.signUpPasswordHint,
-                          prefixIcon:
-                              const Icon(Icons.lock_outline),
+                          prefixIcon: const Icon(Icons.lock_outline),
                           enabled: !isLoading,
                         ),
 
@@ -180,9 +197,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           controller: _confirmPasswordController,
                           passwordController: _passwordController,
                           hintText: context.loc.signUpConfirmPasswordHint,
-                          prefixIcon: const Icon(
-                            Icons.verified_user_outlined,
-                          ),
+                          prefixIcon: const Icon(Icons.verified_user_outlined),
                           enabled: !isLoading,
                           onFieldSubmitted: (_) {
                             if (!isLoading) _signUp();
@@ -194,19 +209,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         FilledButton(
                           onPressed: isLoading ? null : _signUp,
                           style: FilledButton.styleFrom(
-                            minimumSize:
-                                Size(double.infinity, 52.h),
+                            minimumSize: Size(double.infinity, 52.h),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(14.r),
+                              borderRadius: BorderRadius.circular(14.r),
                             ),
                           ),
                           child: isLoading
                               ? const SizedBox(
                                   height: 22,
                                   width: 22,
-                                  child:
-                                      CircularProgressIndicator(
+                                  child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                   ),
                                 )
@@ -214,22 +226,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
 
                         SizedBox(height: 20.h),
+                        OutlinedButton.icon(
+                          onPressed: isLoading ? null : _signUpWithGoogle,
+                          icon: const Icon(Icons.account_circle_outlined),
+                          label: Text(context.loc.signInWithGoogle),
+                        ),
+                        SizedBox(height: 20.h),
 
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Flexible(
-                              child: Text(
-                                context.loc.signUpAlreadyHaveAccount,
-                              ),
+                              child: Text(context.loc.signUpAlreadyHaveAccount),
                             ),
                             TextButton(
                               onPressed: isLoading
                                   ? null
-                                  : () => context.go(
-                                        AppRoute.signIn,
-                                      ),
+                                  : () => context.go(AppRoute.signIn),
                               child: Text(context.loc.signUpSignIn),
                             ),
                           ],
@@ -256,8 +269,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           height: 76.r,
           decoration: BoxDecoration(
             color: colors.primaryContainer,
-            borderRadius:
-                BorderRadius.circular(22.r),
+            borderRadius: BorderRadius.circular(22.r),
           ),
           child: Icon(
             Icons.person_add_alt_1_rounded,
@@ -267,16 +279,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
         SizedBox(height: 24.h),
         Text(
-          'Create account',
+          context.loc.signInSignUp,
           textAlign: TextAlign.center,
-          style:
-              context.textTheme.headlineMedium?.copyWith(
+          style: context.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
         SizedBox(height: 8.h),
         Text(
-          'Join Tickly and start organizing your day.',
+          context.loc.signUpDescription,
           textAlign: TextAlign.center,
           style: context.textTheme.bodyMedium?.copyWith(
             color: colors.onSurfaceVariant,

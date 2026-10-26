@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -13,13 +12,11 @@ import 'package:tickly/src/router/route.dart';
 
 // Điều chỉnh import nếu InputField nằm ở thư mục khác.
 
-
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
 
   @override
-  State<SignInScreen> createState() =>
-      _SignInScreenState();
+  State<SignInScreen> createState() => _SignInScreenState();
 }
 
 class _SignInScreenState extends State<SignInScreen> {
@@ -63,9 +60,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
     setState(() => _signInPending = true);
 
-    context.read<AuthBloc>().add(
-      const AuthGoogleSignInRequested(),
-    );
+    context.read<AuthBloc>().add(const AuthGoogleSignInRequested());
   }
 
   void _handleAuthenticated(AuthState state) {
@@ -111,22 +106,18 @@ class _SignInScreenState extends State<SignInScreen> {
         final isLoading = _signInPending;
 
         return Scaffold(
+          appBar: AppBar(),
           backgroundColor: colors.surface,
           body: SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 24.w,
-                  vertical: 24.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
                 child: ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(maxWidth: 440),
+                  constraints: const BoxConstraints(maxWidth: 440),
                   child: Form(
                     key: _formKey,
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _buildHeader(context),
 
@@ -140,9 +131,8 @@ class _SignInScreenState extends State<SignInScreen> {
 
                         InputField.email(
                           controller: _emailController,
-                          hintText: 'name@example.com',
-                          prefixIcon:
-                              const Icon(Icons.email_outlined),
+                          hintText: context.loc.signInEmailHint,
+                          prefixIcon: const Icon(Icons.email_outlined),
                           enabled: !isLoading,
                         ),
 
@@ -157,8 +147,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         InputField.password(
                           controller: _passwordController,
                           hintText: context.loc.signInPasswordHint,
-                          prefixIcon:
-                              const Icon(Icons.lock_outline),
+                          prefixIcon: const Icon(Icons.lock_outline),
                           textInputAction: TextInputAction.done,
                           enabled: !isLoading,
                           onFieldSubmitted: (_) {
@@ -173,11 +162,8 @@ class _SignInScreenState extends State<SignInScreen> {
                           child: TextButton(
                             onPressed: isLoading
                                 ? null
-                                : () => context.push(
-                                      AppRoute.forgotPassword,
-                                    ),
-                            child:
-                                Text(context.loc.signInForgotPassword),
+                                : () => context.push(AppRoute.forgotPassword),
+                            child: Text(context.loc.signInForgotPassword),
                           ),
                         ),
 
@@ -186,11 +172,9 @@ class _SignInScreenState extends State<SignInScreen> {
                         FilledButton(
                           onPressed: isLoading ? null : _signIn,
                           style: FilledButton.styleFrom(
-                            minimumSize:
-                                Size(double.infinity, 52.h),
+                            minimumSize: Size(double.infinity, 52.h),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(14.r),
+                              borderRadius: BorderRadius.circular(14.r),
                             ),
                           ),
                           child: isLoading
@@ -210,9 +194,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           children: [
                             const Expanded(child: Divider()),
                             Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16.w,
-                              ),
+                              padding: EdgeInsets.symmetric(horizontal: 16.w),
                               child: Text(context.loc.commonOr),
                             ),
                             const Expanded(child: Divider()),
@@ -222,20 +204,13 @@ class _SignInScreenState extends State<SignInScreen> {
                         SizedBox(height: 24.h),
 
                         OutlinedButton.icon(
-                          onPressed:
-                              isLoading ? null : _signInWithGoogle,
-                          icon: const Icon(
-                            Icons.account_circle_outlined,
-                          ),
-                          label: Text(
-                            context.loc.signInWithGoogle,
-                          ),
+                          onPressed: isLoading ? null : _signInWithGoogle,
+                          icon: const Icon(Icons.account_circle_outlined),
+                          label: Text(context.loc.signInWithGoogle),
                           style: OutlinedButton.styleFrom(
-                            minimumSize:
-                                Size(double.infinity, 52.h),
+                            minimumSize: Size(double.infinity, 52.h),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(14.r),
+                              borderRadius: BorderRadius.circular(14.r),
                             ),
                           ),
                         ),
@@ -243,20 +218,13 @@ class _SignInScreenState extends State<SignInScreen> {
                         SizedBox(height: 24.h),
 
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Flexible(
-                              child: Text(
-                                context.loc.signUpAlreadyHaveAccount,
-                              ),
-                            ),
+                            Flexible(child: Text(context.loc.signInNoAccount)),
                             TextButton(
                               onPressed: isLoading
                                   ? null
-                                  : () => context.push(
-                                        AppRoute.signUp,
-                                      ),
+                                  : () => context.push(AppRoute.signUp),
                               child: Text(context.loc.signUpButton),
                             ),
                           ],
@@ -283,8 +251,7 @@ class _SignInScreenState extends State<SignInScreen> {
           width: 76.r,
           decoration: BoxDecoration(
             color: colors.primaryContainer,
-            borderRadius:
-                BorderRadius.circular(22.r),
+            borderRadius: BorderRadius.circular(22.r),
           ),
           child: Icon(
             Icons.check_circle_outline_rounded,
@@ -294,16 +261,15 @@ class _SignInScreenState extends State<SignInScreen> {
         ),
         SizedBox(height: 24.h),
         Text(
-          'Welcome back!',
-          style:
-              context.textTheme.headlineMedium?.copyWith(
+          context.loc.signUpSignIn,
+          style: context.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
         ),
         SizedBox(height: 8.h),
         Text(
-          'Sign in to continue managing your tasks.',
+          context.loc.signInDescription,
           style: context.textTheme.bodyMedium?.copyWith(
             color: colors.onSurfaceVariant,
           ),

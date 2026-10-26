@@ -1,3 +1,4 @@
+import 'package:tickly/src/core/extensions/context.dart';
 
 import 'package:flutter/material.dart';
 
@@ -29,7 +30,7 @@ class CategoryFilter extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
-              label: const Text('Tất cả'),
+              label: Text(context.loc.filterAll),
               selected: selectedCategoryId == null,
               onSelected: (_) => onChanged(null),
             ),
@@ -37,7 +38,7 @@ class CategoryFilter extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
-              label: const Text('Chưa phân loại'),
+              label: Text(context.loc.uncategorized),
               selected: selectedCategoryId == '',
               onSelected: (_) => onChanged(''),
             ),

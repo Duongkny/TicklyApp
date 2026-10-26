@@ -1,9 +1,6 @@
-
 {
   "@@locale": "vi",
-
   "appName": "Tickly",
-
   "commonEmail": "Email",
   "commonPassword": "Mật khẩu",
   "commonConfirmPassword": "Xác nhận mật khẩu",
@@ -16,7 +13,6 @@
   "commonSuccess": "Thành công",
   "commonError": "Lỗi",
   "commonOr": "HOẶC",
-
   "signInTitle": "Chào mừng trở lại!",
   "signInDescription": "Đăng nhập để tiếp tục quản lý công việc của bạn.",
   "signInEmailHint": "name@example.com",
@@ -30,7 +26,6 @@
   "signInSuccess": "Đăng nhập thành công",
   "signInFailure": "Đăng nhập thất bại. Vui lòng thử lại.",
   "signInInvalidCredentials": "Email hoặc mật khẩu không chính xác.",
-
   "signUpTitle": "Tạo tài khoản",
   "signUpDescription": "Tham gia Tickly và bắt đầu sắp xếp công việc mỗi ngày.",
   "signUpEmailHint": "name@example.com",
@@ -45,7 +40,6 @@
   "signUpEmailAlreadyInUse": "Email này đã được sử dụng.",
   "signUpWeakPassword": "Mật khẩu quá yếu.",
   "signUpPasswordMismatch": "Mật khẩu xác nhận không khớp.",
-
   "forgotPasswordTitle": "Quên mật khẩu",
   "forgotPasswordHeading": "Bạn quên mật khẩu?",
   "forgotPasswordDescription": "Nhập địa chỉ email để nhận liên kết đặt lại mật khẩu.",
@@ -59,7 +53,6 @@
   "forgotPasswordCheckInbox": "Vui lòng kiểm tra hộp thư đến hoặc thư mục Spam.",
   "forgotPasswordEmailSentTitle": "Kiểm tra email của bạn",
   "forgotPasswordEmailSentDescription": "Hãy mở email và nhấn vào liên kết để tạo mật khẩu mới.",
-
   "verifyEmailTitle": "Xác minh email",
   "verifyEmailHeading": "Xác minh địa chỉ email của bạn",
   "verifyEmailSentTo": "Chúng tôi đã gửi liên kết xác minh đến",
@@ -75,11 +68,9 @@
   "verifyEmailResendFailure": "Không thể gửi lại email xác minh.",
   "verifyEmailCheckFailure": "Không thể kiểm tra trạng thái xác minh email.",
   "verifyEmailExpired": "Liên kết xác minh đã hết hạn hoặc không hợp lệ.",
-
   "googleSignInSuccess": "Đăng nhập Google thành công",
   "googleSignInFailure": "Không thể đăng nhập bằng Google.",
   "googleSignInCancelled": "Đã hủy đăng nhập Google.",
-
   "validationRequired": "Vui lòng nhập thông tin này",
   "validationEmailRequired": "Vui lòng nhập email",
   "validationEmailInvalid": "Địa chỉ email không hợp lệ",
@@ -92,7 +83,6 @@
   "validationPhoneInvalid": "Số điện thoại không hợp lệ",
   "validationDateRequired": "Vui lòng chọn ngày sinh",
   "validationDateInvalid": "Ngày sinh không hợp lệ",
-
   "authUserNotFound": "Không tìm thấy tài khoản.",
   "authUserDisabled": "Tài khoản đã bị vô hiệu hóa.",
   "authTooManyRequests": "Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau.",
@@ -100,10 +90,252 @@
   "authSessionExpired": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
   "authEmailNotVerified": "Bạn cần xác minh email trước khi tiếp tục.",
   "authUnknownError": "Đã xảy ra lỗi. Vui lòng thử lại.",
-
   "homeTitle": "Trang chủ",
   "homeWelcome": "Chào mừng đến với Tickly!",
   "homeDescription": "Hãy bắt đầu quản lý công việc của bạn.",
   "homeSignOut": "Đăng xuất",
-  "homeSignOutSuccess": "Đăng xuất thành công"
+  "homeSignOutSuccess": "Đăng xuất thành công",
+  "taskReminders": "Nhắc nhở công việc",
+  "reminderChannelDescription": "Thông báo nhắc nhở từ Tickly",
+  "reminderTestBody": "Thông báo thử nghiệm hoạt động!",
+  "actionFailed": "Thao tác không thành công. Vui lòng thử lại.",
+  "authCheckFailed": "Không thể kiểm tra đăng nhập",
+  "welcomeGoodDay": "Một ngày thật tốt",
+  "welcomeDescription": "Quản lý công việc đơn giản, hiệu quả và mạch lạc hơn với Tickly.",
+  "welcomeStart": "Bắt đầu",
+  "accountLoadFailed": "Không thể lấy thông tin tài khoản.",
+  "fullName": "Họ và tên",
+  "emailAddressFallback": "địa chỉ email của bạn",
+  "previous": "Trước",
+  "next": "Sau",
+  "calendarTitle": "Lịch công việc",
+  "today": "Hôm nay",
+  "calendarMonth": "Tháng",
+  "calendarWeek": "Tuần",
+  "noTasksDue": "Không có công việc đến hạn",
+  "categoryTooLarge": "Danh mục có quá nhiều công việc. Không thể xóa trong một lần.",
+  "categoryLoadFailed": "Không thể tải danh mục",
+  "connectionFailed": "Không thể kết nối Firestore.",
+  "categoryCreateFailed": "Không thể tạo danh mục.",
+  "categoryUpdateFailed": "Không thể cập nhật danh mục.",
+  "categoryDeleteFailed": "Không thể xóa danh mục.",
+  "signInRequired": "Vui lòng đăng nhập",
+  "categoryDeleteTitle": "Xóa danh mục?",
+  "commonDelete": "Xóa",
+  "categoryEdit": "Chỉnh sửa danh mục",
+  "categoryDelete": "Xóa danh mục",
+  "categoryEmptyTitle": "Bạn chưa có danh mục nào",
+  "categoryEmptyDescription": "Hãy tạo danh mục đầu tiên để sắp xếp công việc dễ dàng hơn.",
+  "categoryCreate": "Tạo danh mục",
+  "categoriesTitle": "Danh mục",
+  "categoryAdd": "Thêm danh mục",
+  "categoryCreated": "Tạo danh mục thành công",
+  "categoryUpdated": "Cập nhật danh mục thành công",
+  "categoryDeleted": "Xóa danh mục thành công",
+  "actionSuccess": "Thao tác thành công",
+  "allTasks": "Tất cả công việc",
+  "filterAll": "Tất cả",
+  "uncategorized": "Chưa phân loại",
+  "categoryName": "Tên danh mục",
+  "categoryNameHint": "Ví dụ: Học tập",
+  "categoryNameRequired": "Vui lòng nhập tên danh mục",
+  "chooseColor": "Chọn màu",
+  "commonSave": "Lưu",
+  "categoriesLoading": "Đang tải danh mục...",
+  "categoryNone": "Không có danh mục",
+  "searchAndFilter": "Tìm kiếm và lọc",
+  "accountTitle": "Tài khoản",
+  "tasksTitle": "Công việc",
+  "statisticsTitle": "Thống kê",
+  "settingsTitle": "Cài đặt",
+  "taskUpdateFailed": "Không thể cập nhật công việc",
+  "taskLoadFailed": "Không thể tải danh sách công việc",
+  "tasksEmptyTitle": "Chưa có công việc nào",
+  "tasksEmptyDescription": "Hãy thêm công việc đầu tiên của bạn!",
+  "taskCreate": "Tạo công việc",
+  "yourTasks": "Công việc của bạn",
+  "categoriesUnavailable": "Không thể tải danh mục; đang hiển thị công việc đã tải.",
+  "noMatchingTasks": "Không tìm thấy công việc phù hợp",
+  "notificationPermissionHint": "Hãy cho phép thông báo cho Tickly trong cài đặt điện thoại.",
+  "reminderUpdateFailed": "Không thể cập nhật nhắc nhở. Vui lòng thử lại.",
+  "profileTitle": "Thông tin cá nhân",
+  "profileUpdated": "Đã cập nhật thông tin cá nhân",
+  "profileUpdateFailed": "Không thể cập nhật thông tin. Vui lòng thử lại.",
+  "changePassword": "Đổi mật khẩu",
+  "sendLink": "Gửi liên kết",
+  "resetLinkSent": "Đã gửi liên kết. Vui lòng kiểm tra email.",
+  "emailSendFailed": "Không thể gửi email. Vui lòng thử lại.",
+  "signOutTitle": "Đăng xuất?",
+  "signOutConfirmation": "Bạn có muốn đăng xuất khỏi Tickly?",
+  "themeTitle": "Chủ đề",
+  "themeSystem": "Theo hệ thống",
+  "themeLight": "Sáng",
+  "themeDark": "Tối",
+  "defaultUserName": "Người dùng Tickly",
+  "applicationTitle": "Ứng dụng",
+  "languageTitle": "Ngôn ngữ",
+  "aboutTitle": "Về ứng dụng",
+  "appDescription": "Quản lý công việc đơn giản, giúp bạn tập trung vào những điều quan trọng mỗi ngày.",
+  "statisticsPageTitle": "Thống kê công việc",
+  "statisticsLoadFailed": "Không thể tải dữ liệu thống kê",
+  "categoryStatisticsFailed": "Không thể tải phân bố danh mục. Vui lòng thử lại ở tab Danh mục.",
+  "categoryStatisticsTitle": "Công việc theo danh mục",
+  "statisticsTotal": "tổng cộng",
+  "categoryStatisticsEmpty": "Thêm công việc để xem phân bố danh mục.",
+  "completionPerformance": "Hiệu suất hoàn thành",
+  "completionByDay": "Số công việc hoàn thành theo ngày",
+  "periodSevenDays": "7 ngày",
+  "periodThirtyDays": "30 ngày",
+  "completionEmpty": "Chưa có công việc hoàn thành trong khoảng thời gian này",
+  "statisticsOverview": "Tổng quan công việc",
+  "statisticsTotalTasks": "Tổng công việc",
+  "statusCompleted": "Đã hoàn thành",
+  "statusPending": "Chưa hoàn thành",
+  "statusOverdue": "Quá hạn",
+  "completionProgress": "Tiến độ hoàn thành",
+  "taskCreated": "Tạo công việc thành công",
+  "taskCreateFailed": "Không thể tạo công việc",
+  "taskUpdated": "Cập nhật công việc thành công",
+  "taskStatusUpdated": "Đã cập nhật trạng thái công việc",
+  "taskToggleFailed": "Không thể đổi trạng thái công việc.",
+  "taskDeleted": "Xóa công việc thành công",
+  "taskDeleteFailed": "Không thể xóa công việc",
+  "reminderMustBeFuture": "Thời gian nhắc nhở phải ở tương lai",
+  "categoryNotConfirmed": "Chưa thể xác nhận danh mục đã chọn",
+  "categoryNoLongerExists": "Danh mục đã chọn không còn tồn tại",
+  "taskTitleLabel": "Tiêu đề công việc",
+  "taskTitleHint": "Ví dụ: Học Flutter BLoC",
+  "taskTitleRequired": "Vui lòng nhập tiêu đề",
+  "taskDescriptionLabel": "Mô tả",
+  "taskDescriptionHint": "Nhập mô tả công việc...",
+  "priorityTitle": "Mức độ ưu tiên",
+  "priorityLow": "Thấp",
+  "priorityMedium": "Vừa",
+  "priorityHigh": "Cao",
+  "dueDateTime": "Ngày và giờ hết hạn",
+  "notSelected": "Chưa chọn",
+  "reminderNotSet": "Chưa đặt nhắc nhở",
+  "removeReminder": "Bỏ nhắc nhở",
+  "newReminderMustBeFuture": "Thời gian nhắc nhở mới phải ở tương lai",
+  "taskEdit": "Chỉnh sửa công việc",
+  "removeDueDate": "Bỏ hạn hoàn thành",
+  "commonSaving": "Đang lưu...",
+  "saveChanges": "Lưu thay đổi",
+  "taskDeleteTitle": "Xóa công việc?",
+  "categoryNotFound": "Không tìm thấy danh mục",
+  "taskDetails": "Chi tiết công việc",
+  "taskNotFound": "Không tìm thấy công việc",
+  "commonEdit": "Chỉnh sửa",
+  "taskNoDescription": "Chưa có mô tả",
+  "markCompleted": "Đánh dấu hoàn thành",
+  "taskIsCompleted": "Công việc đã hoàn thành",
+  "taskIsPending": "Công việc chưa hoàn thành",
+  "upcoming": "Sắp tới",
+  "notSet": "Chưa đặt",
+  "dueDate": "Hạn hoàn thành",
+  "reminderLabel": "Nhắc nhở",
+  "createdDate": "Ngày tạo",
+  "lastUpdated": "Cập nhật lần cuối",
+  "sortNewest": "Mới nhất",
+  "sortOldest": "Cũ nhất",
+  "sortPriorityHigh": "Ưu tiên cao",
+  "sortPriorityLow": "Ưu tiên thấp",
+  "sortDueSoon": "Hạn gần nhất",
+  "sortDueLate": "Hạn xa nhất",
+  "sortTasks": "Sắp xếp công việc",
+  "taskSearchHint": "Tìm kiếm công việc...",
+  "clearSearch": "Xóa tìm kiếm",
+  "validationNumberInvalid": "Vui lòng nhập số hợp lệ",
+  "validationPositiveInteger": "Vui lòng nhập số nguyên dương",
+  "validationOtp": "Vui lòng nhập mã gồm 6 chữ số",
+  "inputDateOfBirth": "Ngày sinh",
+  "inputNumber": "Số",
+  "welcomeHeadline": "Biến kế hoạch thành\nhành động mỗi ngày",
+  "taskDeleteConfirmation": "Bạn có chắc muốn xóa công việc này?\n\nCông việc sẽ bị xóa vĩnh viễn.",
+  "taskCount": "{count} công việc",
+  "@taskCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "completedTaskCount": "{count} công việc đã hoàn thành",
+  "@completedTaskCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "completionCount": "{completed}/{total} đã hoàn thành",
+  "@completionCount": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "categoryDeleteConfirmation": "Bạn có chắc muốn xóa \"{name}\"?\n\nCác công việc trong danh mục này sẽ được giữ lại và chuyển sang \"Chưa phân loại\".",
+  "@categoryDeleteConfirmation": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "resetPasswordConfirmation": "Gửi liên kết đặt lại mật khẩu đến {email}?",
+  "@resetPasswordConfirmation": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderBody": "Đến giờ thực hiện: {title}",
+  "@reminderBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryChartSummary": "{tasks} công việc trong {categories} danh mục",
+  "@categoryChartSummary": {
+    "placeholders": {
+      "tasks": {
+        "type": "int"
+      },
+      "categories": {
+        "type": "int"
+      }
+    }
+  },
+  "overdueAt": "Quá hạn · {time}",
+  "@overdueAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "dueAt": "Hạn: {time}",
+  "@dueAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "calendarDate": "Ngày {date}",
+  "@calendarDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }

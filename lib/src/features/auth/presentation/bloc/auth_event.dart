@@ -1,4 +1,3 @@
-
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/app_user.dart';
@@ -27,10 +26,7 @@ class AuthSignInRequested extends AuthEvent {
   final String email;
   final String password;
 
-  const AuthSignInRequested({
-    required this.email,
-    required this.password,
-  });
+  const AuthSignInRequested({required this.email, required this.password});
 
   @override
   List<Object?> get props => [email, password];
@@ -40,15 +36,17 @@ class AuthSignUpRequested extends AuthEvent {
   final String email;
   final String password;
   final String confirmPassword;
+  final String? displayName;
 
   const AuthSignUpRequested({
     required this.email,
     required this.password,
     required this.confirmPassword,
+    this.displayName,
   });
 
   @override
-  List<Object?> get props => [email, password, confirmPassword];
+  List<Object?> get props => [email, password, confirmPassword, displayName];
 }
 
 class AuthSignOutRequested extends AuthEvent {

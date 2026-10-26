@@ -1,3 +1,5 @@
+import 'package:tickly/src/core/localization/bloc/localization_bloc.dart';
+import 'package:tickly/src/core/localization/bloc/localization_state.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -31,14 +33,12 @@ List<RouteBase> mainRoutes() => [
         providers: [
           // ==================== TASK BLOC ====================
           BlocProvider<TaskBloc>(
-            create: (_) => getIt<TaskBloc>()
-              ..add(const TaskStarted()),
+            create: (_) => getIt<TaskBloc>()..add(const TaskStarted()),
           ),
 
           // ==================== CATEGORY BLOC ====================
           BlocProvider<CategoryBloc>(
-            create: (_) => getIt<CategoryBloc>()
-              ..add(const CategoryStarted()),
+            create: (_) => getIt<CategoryBloc>()..add(const CategoryStarted()),
           ),
         ],
 
@@ -61,22 +61,37 @@ List<RouteBase> mainRoutes() => [
                 user.uid,
               );
 
-              debugPrint(
-                '[Reminder] Đồng bộ lịch nhắc thành công',
-              );
+              debugPrint('[Reminder] Đồng bộ lịch nhắc thành công');
             } catch (error, stackTrace) {
-              debugPrint(
-                '[Reminder] Đồng bộ thất bại: $error',
-              );
+              debugPrint('[Reminder] Đồng bộ thất bại: $error');
 
-              debugPrintStack(
-                stackTrace: stackTrace,
-              );
+              debugPrintStack(stackTrace: stackTrace);
             }
           },
 
           // ==================== HOME ====================
-          child: const HomeScreen(),
+          child: BlocListener<LocalizationBloc, LocalizationState>(
+            listenWhen: (previous, current) =>
+                previous.selectedLanguage != current.selectedLanguage,
+            listener: (context, language) async {
+              final user = FirebaseAuth.instance.currentUser;
+              final tasks = context.read<TaskBloc>().state;
+              if (user == null || tasks.status != TaskStatusView.success) {
+                return;
+              }
+              try {
+                await TaskReminderService.instance.syncReminders(
+                  tasks.tasks,
+                  user.uid,
+                );
+              } catch (error) {
+                debugPrint(
+                  '[Reminder] Could not update reminder language: $error',
+                );
+              }
+            },
+            child: const HomeScreen(),
+          ),
         ),
       );
     },

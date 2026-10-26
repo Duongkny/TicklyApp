@@ -10,6 +10,7 @@ import 'package:tickly/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:tickly/src/features/auth/presentation/bloc/auth_event.dart';
 
 import 'src/core/app/my_app.dart';
+import 'src/core/theme/bloc/theme_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,15 +28,14 @@ Future<void> main() async {
   await configureDependencies();
 
   debugPrint('STEP 5: Check AuthBloc');
-  debugPrint(
-    'AuthBloc registered: ${getIt.isRegistered<AuthBloc>()}',
-  );
+  debugPrint('AuthBloc registered: ${getIt.isRegistered<AuthBloc>()}');
 
   debugPrint('STEP 6: Run App');
 
   runApp(
     MultiBlocProvider(
       providers: [
+        BlocProvider<ThemeBloc>(create: (_) => ThemeBloc()..add(GetTheme())),
         BlocProvider<LocalizationBloc>(
           create: (_) => LocalizationBloc()..add(GetLanguage()),
         ),

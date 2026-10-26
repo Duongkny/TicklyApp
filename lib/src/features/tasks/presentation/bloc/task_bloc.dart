@@ -1,3 +1,4 @@
+import 'package:tickly/src/core/localization/app_strings.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -71,7 +72,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           debugPrintStack(stackTrace: stackTrace);
 
           if (!isClosed) {
-            add(TaskSubscriptionFailed(error.toString()));
+            add(TaskSubscriptionFailed(AppStrings.current.taskLoadFailed));
           }
         },
       );
@@ -79,7 +80,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       emit(
         state.copyWith(
           status: TaskStatusView.failure,
-          errorMessage: 'Không thể kết nối Firestore.',
+          errorMessage: AppStrings.current.connectionFailed,
           clearMessages: true,
         ),
       );
@@ -116,6 +117,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     TaskCreateRequested event,
     Emitter<TaskState> emit,
   ) async {
+    debugPrint('========== CREATE TASK ==========');
+    debugPrint('Title: ${event.task.title}');
+    debugPrint('UserId: ${event.task.userId}');
+    debugPrint('DueDate: ${event.task.dueDate}');
+    debugPrint('ReminderAt: ${event.task.reminderAt}');
+    debugPrint('CompletedAt: ${event.task.completedAt}');
+
     emit(
       state.copyWith(
         action: TaskAction.create,
@@ -125,22 +133,29 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     );
 
     try {
+      debugPrint('[TaskBloc] Bắt đầu tạo Task');
+
       await _createTask(event.task);
+
+      debugPrint('[TaskBloc] Tạo Task thành công');
 
       emit(
         state.copyWith(
           action: TaskAction.create,
           actionStatus: TaskActionStatus.success,
-          successMessage: 'Tạo công việc thành công',
+          successMessage: AppStrings.current.taskCreated,
           clearMessages: true,
         ),
       );
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('[TaskBloc] CREATE TASK ERROR: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
       emit(
         state.copyWith(
           action: TaskAction.create,
           actionStatus: TaskActionStatus.failure,
-          errorMessage: 'Không thể tạo công việc.',
+          errorMessage: AppStrings.current.taskCreateFailed,
           clearMessages: true,
         ),
       );
@@ -168,7 +183,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         state.copyWith(
           action: TaskAction.update,
           actionStatus: TaskActionStatus.success,
-          successMessage: 'Cập nhật công việc thành công',
+          successMessage: AppStrings.current.taskUpdated,
           clearMessages: true,
         ),
       );
@@ -177,7 +192,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         state.copyWith(
           action: TaskAction.update,
           actionStatus: TaskActionStatus.failure,
-          errorMessage: 'Không thể cập nhật công việc.',
+          errorMessage: AppStrings.current.taskUpdateFailed,
           clearMessages: true,
         ),
       );
@@ -205,7 +220,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         state.copyWith(
           action: TaskAction.toggle,
           actionStatus: TaskActionStatus.success,
-          successMessage: 'Đã cập nhật trạng thái công việc',
+          successMessage: AppStrings.current.taskStatusUpdated,
           clearMessages: true,
         ),
       );
@@ -214,7 +229,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         state.copyWith(
           action: TaskAction.toggle,
           actionStatus: TaskActionStatus.failure,
-          errorMessage: 'Không thể đổi trạng thái công việc.',
+          errorMessage: AppStrings.current.taskToggleFailed,
           clearMessages: true,
         ),
       );
@@ -242,7 +257,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         state.copyWith(
           action: TaskAction.delete,
           actionStatus: TaskActionStatus.success,
-          successMessage: 'Xóa công việc thành công',
+          successMessage: AppStrings.current.taskDeleted,
           clearMessages: true,
         ),
       );
@@ -251,7 +266,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         state.copyWith(
           action: TaskAction.delete,
           actionStatus: TaskActionStatus.failure,
-          errorMessage: 'Không thể xóa công việc.',
+          errorMessage: AppStrings.current.taskDeleteFailed,
           clearMessages: true,
         ),
       );
@@ -260,22 +275,19 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   // ==================== CLEAR ACTION ====================
 
-void _onActionCleared(
-  TaskActionCleared event,
-  Emitter<TaskState> emit,
-) {
-  if (state.actionStatus == TaskActionStatus.loading) {
-    return;
-  }
+  void _onActionCleared(TaskActionCleared event, Emitter<TaskState> emit) {
+    if (state.actionStatus == TaskActionStatus.loading) {
+      return;
+    }
 
-  emit(
-    state.copyWith(
-      action: TaskAction.none,
-      actionStatus: TaskActionStatus.initial,
-      clearMessages: true,
-    ),
-  );
-}
+    emit(
+      state.copyWith(
+        action: TaskAction.none,
+        actionStatus: TaskActionStatus.initial,
+        clearMessages: true,
+      ),
+    );
+  }
   // ==================== DISPOSE ====================
 
   @override

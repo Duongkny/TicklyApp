@@ -1,11 +1,8 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:tickly/src/core/local_storage/app_local_storage.dart';
 import 'package:tickly/src/core/local_storage/local_storage_key.dart';
 import 'package:tickly/src/core/theme/model/theme_model.dart';
-
-
-
 
 part 'theme_event.dart';
 part 'theme_state.dart';

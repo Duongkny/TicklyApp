@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:injectable/injectable.dart';
@@ -23,17 +22,7 @@ class CategoryRemoteDataSource {
   }
 
   CollectionReference<Map<String, dynamic>> get _categories {
-    return _firestore
-        .collection('users')
-        .doc(_userId)
-        .collection('categories');
-  }
-
-  CollectionReference<Map<String, dynamic>> get _tasks {
-    return _firestore
-        .collection('users')
-        .doc(_userId)
-        .collection('tasks');
+    return _firestore.collection('users').doc(_userId).collection('categories');
   }
 
   // ==================== CREATE ====================
@@ -48,9 +37,7 @@ class CategoryRemoteDataSource {
     final name = category.name.trim();
 
     if (name.isEmpty || name.length > 50) {
-      throw ArgumentError(
-        'Category name must be 1-50 characters',
-      );
+      throw ArgumentError('Category name must be 1-50 characters');
     }
 
     final doc = _categories.doc();
@@ -69,13 +56,9 @@ class CategoryRemoteDataSource {
   // ==================== READ (REALTIME) ====================
 
   Stream<List<CategoryModel>> watchCategories() {
-    return _categories.orderBy('createdAt').snapshots().map(
-      (snapshot) {
-        return snapshot.docs
-            .map(CategoryModel.fromFirestore)
-            .toList();
-      },
-    );
+    return _categories.orderBy('createdAt').snapshots().map((snapshot) {
+      return snapshot.docs.map(CategoryModel.fromFirestore).toList();
+    });
   }
 
   // ==================== UPDATE ====================
@@ -88,9 +71,7 @@ class CategoryRemoteDataSource {
     final name = category.name.trim();
 
     if (name.isEmpty || name.length > 50) {
-      throw ArgumentError(
-        'Category name must be 1-50 characters',
-      );
+      throw ArgumentError('Category name must be 1-50 characters');
     }
 
     await _categories.doc(category.id).update({
@@ -111,9 +92,7 @@ class CategoryRemoteDataSource {
 
     final userRef = _firestore.collection('users').doc(uid);
 
-    final categoryRef = userRef
-        .collection('categories')
-        .doc(categoryId);
+    final categoryRef = userRef.collection('categories').doc(categoryId);
 
     final tasksRef = userRef.collection('tasks');
 

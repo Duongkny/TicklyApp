@@ -1,3 +1,4 @@
+import 'package:tickly/src/core/extensions/context.dart';
 
 import 'package:flutter/material.dart';
 
@@ -12,8 +13,7 @@ class TaskSearchField extends StatefulWidget {
   final ValueChanged<String> onChanged;
 
   @override
-  State<TaskSearchField> createState() =>
-      _TaskSearchFieldState();
+  State<TaskSearchField> createState() => _TaskSearchFieldState();
 }
 
 class _TaskSearchFieldState extends State<TaskSearchField> {
@@ -22,9 +22,7 @@ class _TaskSearchFieldState extends State<TaskSearchField> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(
-      text: widget.query,
-    );
+    _controller = TextEditingController(text: widget.query);
   }
 
   @override
@@ -34,9 +32,7 @@ class _TaskSearchFieldState extends State<TaskSearchField> {
     if (widget.query != _controller.text) {
       _controller.value = TextEditingValue(
         text: widget.query,
-        selection: TextSelection.collapsed(
-          offset: widget.query.length,
-        ),
+        selection: TextSelection.collapsed(offset: widget.query.length),
       );
     }
   }
@@ -56,11 +52,11 @@ class _TaskSearchFieldState extends State<TaskSearchField> {
       onChanged: widget.onChanged,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
-        hintText: 'Tìm kiếm công việc...',
+        hintText: context.loc.taskSearchHint,
         prefixIcon: const Icon(Icons.search_rounded),
         suffixIcon: widget.query.isNotEmpty
             ? IconButton(
-                tooltip: 'Xóa tìm kiếm',
+                tooltip: context.loc.clearSearch,
                 icon: const Icon(Icons.close_rounded),
                 onPressed: () {
                   _controller.clear();

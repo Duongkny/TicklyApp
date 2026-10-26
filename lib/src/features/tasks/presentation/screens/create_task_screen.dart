@@ -1,9 +1,11 @@
+import 'package:tickly/src/core/localization/date_formatting.dart';
+import 'package:tickly/src/core/extensions/context.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tickly/src/features/categories/presentation/widgets/category_selector.dart';
 import 'package:tickly/src/features/categories/presentation/bloc/category_bloc.dart';
-import 'package:tickly/src/features/categories/presentation/bloc/category_event.dart';
+
 import 'package:tickly/src/features/categories/presentation/bloc/category_state.dart';
 
 import '../../domain/entities/task_entity.dart';
@@ -104,9 +106,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
 
     if (!selected.isAfter(DateTime.now())) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thời gian nhắc nhở phải ở tương lai')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.loc.reminderMustBeFuture)));
       return;
     }
 
@@ -133,7 +135,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     if (user == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Vui lòng đăng nhập')));
+      ).showSnackBar(SnackBar(content: Text(context.loc.signInRequired)));
       return;
     }
 
@@ -145,7 +147,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     if (_categoryId != null) {
       if (categoryState.status != CategoryViewStatus.success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Chưa thể xác nhận danh mục đã chọn')),
+          SnackBar(content: Text(context.loc.categoryNotConfirmed)),
         );
         return;
       }
@@ -156,7 +158,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
       if (!exists) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Danh mục đã chọn không còn tồn tại')),
+          SnackBar(content: Text(context.loc.categoryNoLongerExists)),
         );
         return;
       }
@@ -190,100 +192,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   // ==================== CATEGORY DROPDOWN ====================
 
-  Widget _buildCategoryDropdown() {
-    return BlocBuilder<CategoryBloc, CategoryState>(
-      builder: (context, state) {
-        // Đang tải danh mục.
-        if (state.status == CategoryViewStatus.initial ||
-            state.status == CategoryViewStatus.loading) {
-          return const ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.folder_outlined),
-            title: Text('Đang tải danh mục...'),
-            trailing: SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          );
-        }
-
-        // Không thể tải danh mục.
-        if (state.status == CategoryViewStatus.failure) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Không thể tải danh mục'),
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: () {
-                  context.read<CategoryBloc>().add(const CategoryStarted());
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Thử lại'),
-              ),
-            ],
-          );
-        }
-
-        final categories = state.categories;
-
-        // Dropdown chỉ nhận ID đang tồn tại.
-        final selectedId =
-            categories.any((category) => category.id == _categoryId)
-            ? _categoryId
-            : null;
-
-        return DropdownButtonFormField<String>(
-          key: ValueKey(selectedId ?? 'no-category'),
-          initialValue: selectedId,
-          isExpanded: true,
-          decoration: const InputDecoration(
-            labelText: 'Danh mục',
-            hintText: 'Chọn danh mục',
-            prefixIcon: Icon(Icons.folder_outlined),
-            border: OutlineInputBorder(),
-          ),
-          items: [
-            const DropdownMenuItem<String>(
-              value: '',
-              child: Text('Không có danh mục'),
-            ),
-
-            ...categories.map((category) {
-              return DropdownMenuItem<String>(
-                value: category.id,
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 7,
-                      backgroundColor: Color(category.colorValue),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        category.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ],
-          onChanged: (value) {
-            setState(() {
-              _categoryId = value == null || value.isEmpty ? null : value;
-            });
-          },
-        );
-      },
-    );
-  }
-
-  // ==================== BUILD ====================
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -301,7 +209,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         if (state.actionStatus == TaskActionStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.errorMessage ?? 'Không thể tạo công việc'),
+              content: Text(state.errorMessage ?? context.loc.taskCreateFailed),
             ),
           );
         }
@@ -309,7 +217,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       child: Scaffold(
         backgroundColor: colors.surface,
         appBar: AppBar(
-          title: const Text('Tạo công việc'),
+          title: Text(context.loc.taskCreate),
           backgroundColor: colors.surface,
         ),
 
@@ -324,14 +232,14 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   controller: _titleController,
                   maxLength: 200,
                   textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: 'Tiêu đề công việc',
-                    hintText: 'Ví dụ: Học Flutter BLoC',
+                  decoration: InputDecoration(
+                    labelText: context.loc.taskTitleLabel,
+                    hintText: context.loc.taskTitleHint,
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Vui lòng nhập tiêu đề';
+                      return context.loc.taskTitleRequired;
                     }
 
                     return null;
@@ -344,9 +252,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 TextFormField(
                   controller: _descriptionController,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Mô tả',
-                    hintText: 'Nhập mô tả công việc...',
+                  decoration: InputDecoration(
+                    labelText: context.loc.taskDescriptionLabel,
+                    hintText: context.loc.taskDescriptionHint,
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -355,7 +263,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
                 // ==================== CATEGORY ====================
                 Text(
-                  'Danh mục',
+                  context.loc.categoriesTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
 
@@ -374,20 +282,26 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
                 // ==================== PRIORITY ====================
                 Text(
-                  'Mức độ ưu tiên',
+                  context.loc.priorityTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
 
                 const SizedBox(height: 12),
 
                 SegmentedButton<TaskPriority>(
-                  segments: const [
-                    ButtonSegment(value: TaskPriority.low, label: Text('Thấp')),
+                  segments: [
+                    ButtonSegment(
+                      value: TaskPriority.low,
+                      label: Text(context.loc.priorityLow),
+                    ),
                     ButtonSegment(
                       value: TaskPriority.medium,
-                      label: Text('Vừa'),
+                      label: Text(context.loc.priorityMedium),
                     ),
-                    ButtonSegment(value: TaskPriority.high, label: Text('Cao')),
+                    ButtonSegment(
+                      value: TaskPriority.high,
+                      label: Text(context.loc.priorityHigh),
+                    ),
                   ],
                   selected: {_priority},
                   onSelectionChanged: (values) {
@@ -406,15 +320,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     Icons.calendar_month_outlined,
                     color: colors.primary,
                   ),
-                  title: const Text('Ngày và giờ hết hạn'),
+                  title: Text(context.loc.dueDateTime),
                   subtitle: Text(
                     _dueDate == null
-                        ? 'Chưa chọn'
-                        : '${_dueDate!.day.toString().padLeft(2, '0')}/'
-                              '${_dueDate!.month.toString().padLeft(2, '0')}/'
-                              '${_dueDate!.year} '
-                              '${_dueDate!.hour.toString().padLeft(2, '0')}:'
-                              '${_dueDate!.minute.toString().padLeft(2, '0')}',
+                        ? context.loc.notSelected
+                        : localizedDateTime(context, _dueDate!),
                   ),
                   trailing: _dueDate == null
                       ? const Icon(Icons.chevron_right)
@@ -437,20 +347,16 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     Icons.notifications_active_outlined,
                     color: colors.primary,
                   ),
-                  title: const Text('Nhắc nhở công việc'),
+                  title: Text(context.loc.taskReminders),
                   subtitle: Text(
                     _reminderAt == null
-                        ? 'Chưa đặt nhắc nhở'
-                        : '${_reminderAt!.day.toString().padLeft(2, '0')}/'
-                              '${_reminderAt!.month.toString().padLeft(2, '0')}/'
-                              '${_reminderAt!.year} '
-                              '${_reminderAt!.hour.toString().padLeft(2, '0')}:'
-                              '${_reminderAt!.minute.toString().padLeft(2, '0')}',
+                        ? context.loc.reminderNotSet
+                        : localizedDateTime(context, _reminderAt!),
                   ),
                   trailing: _reminderAt == null
                       ? const Icon(Icons.chevron_right)
                       : IconButton(
-                          tooltip: 'Bỏ nhắc nhở',
+                          tooltip: context.loc.removeReminder,
                           onPressed: () {
                             setState(() {
                               _reminderAt = null;
@@ -480,7 +386,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                               height: 22,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Tạo công việc'),
+                          : Text(context.loc.taskCreate),
                     );
                   },
                 ),

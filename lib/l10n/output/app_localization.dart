@@ -1669,6 +1669,60 @@ abstract class AppLocalizations {
   /// In vi, this message translates to:
   /// **'Ngày {date}'**
   String calendarDate(String date);
+
+  /// No description provided for @enableRemindersPrompt.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhắc việc đang tắt. Bật để nhận thông báo cho công việc này?'**
+  String get enableRemindersPrompt;
+
+  /// No description provided for @enableReminders.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bật nhắc việc'**
+  String get enableReminders;
+
+  /// No description provided for @reminderMayBeDelayed.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa được phép nhắc đúng giờ. Android có thể gửi thông báo trễ. Bạn có thể cấp quyền trong Cài đặt → Nhắc đúng giờ.'**
+  String get reminderMayBeDelayed;
+
+  /// No description provided for @exactReminders.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhắc đúng giờ'**
+  String get exactReminders;
+
+  /// No description provided for @exactRemindersDescription.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cho phép Tickly đặt báo thức và lời nhắc đúng giờ đã chọn.'**
+  String get exactRemindersDescription;
+
+  /// No description provided for @exactRemindersEnabled.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã cho phép nhắc đúng giờ và cập nhật lịch nhắc.'**
+  String get exactRemindersEnabled;
+
+  /// No description provided for @notificationTest.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gửi thông báo thử'**
+  String get notificationTest;
+
+  /// No description provided for @notificationTestSent.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã gửi thông báo thử. Kiểm tra thanh thông báo của điện thoại.'**
+  String get notificationTestSent;
+
+  /// No description provided for @notificationSystemSettings.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cài đặt thông báo trên điện thoại'**
+  String get notificationSystemSettings;
 }
 
 class _AppLocalizationsDelegate

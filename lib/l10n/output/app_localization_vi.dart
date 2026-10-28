@@ -842,4 +842,36 @@ class AppLocalizationsVi extends AppLocalizations {
   String calendarDate(String date) {
     return 'Ngày $date';
   }
+
+  @override
+  String get enableRemindersPrompt =>
+      'Nhắc việc đang tắt. Bật để nhận thông báo cho công việc này?';
+
+  @override
+  String get enableReminders => 'Bật nhắc việc';
+
+  @override
+  String get reminderMayBeDelayed =>
+      'Chưa được phép nhắc đúng giờ. Android có thể gửi thông báo trễ. Bạn có thể cấp quyền trong Cài đặt → Nhắc đúng giờ.';
+
+  @override
+  String get exactReminders => 'Nhắc đúng giờ';
+
+  @override
+  String get exactRemindersDescription =>
+      'Cho phép Tickly đặt báo thức và lời nhắc đúng giờ đã chọn.';
+
+  @override
+  String get exactRemindersEnabled =>
+      'Đã cho phép nhắc đúng giờ và cập nhật lịch nhắc.';
+
+  @override
+  String get notificationTest => 'Gửi thông báo thử';
+
+  @override
+  String get notificationTestSent =>
+      'Đã gửi thông báo thử. Kiểm tra thanh thông báo của điện thoại.';
+
+  @override
+  String get notificationSystemSettings => 'Cài đặt thông báo trên điện thoại';
 }

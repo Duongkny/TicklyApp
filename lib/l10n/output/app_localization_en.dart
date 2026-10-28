@@ -867,4 +867,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String calendarDate(String date) {
     return '$date';
   }
+
+  @override
+  String get enableRemindersPrompt =>
+      'Reminders are off. Enable them to receive a notification for this task?';
+
+  @override
+  String get enableReminders => 'Enable reminders';
+
+  @override
+  String get reminderMayBeDelayed =>
+      'Exact reminder permission is off. Android may delay notifications. Enable it in Settings → On-time reminders.';
+
+  @override
+  String get exactReminders => 'On-time reminders';
+
+  @override
+  String get exactRemindersDescription =>
+      'Allow Tickly to schedule alarms and reminders at the selected time.';
+
+  @override
+  String get exactRemindersEnabled =>
+      'On-time reminders are allowed and schedules have been updated.';
+
+  @override
+  String get notificationTest => 'Send test notification';
+
+  @override
+  String get notificationTestSent =>
+      'Test notification sent. Check your phone’s notification tray.';
+
+  @override
+  String get notificationSystemSettings => 'Phone notification settings';
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import '../local_storage/app_local_storage.dart';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -13,6 +14,9 @@ import '../../features/tasks/domain/entities/task_entity.dart';
 class TaskReminderService {
   TaskReminderService._();
 
+  @visibleForTesting
+  TaskReminderService.forTesting();
+
   static final TaskReminderService instance = TaskReminderService._();
 
   final FlutterLocalNotificationsPlugin _plugin =
@@ -20,6 +24,8 @@ class TaskReminderService {
 
   Future<void>? _initializationFuture;
   Future<void> _syncQueue = Future<void>.value();
+
+  bool _permissionRequested = false;
 
   static const String _taskPrefix = 'tickly-task:';
 
@@ -71,7 +77,28 @@ class TaskReminderService {
           AndroidFlutterLocalNotificationsPlugin
         >();
 
+    if (await android?.areNotificationsEnabled() == true) return true;
     return await android?.requestNotificationsPermission() ?? false;
+  }
+
+  Future<bool> canScheduleExactly() async {
+    await initialize();
+    return await _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >()
+            ?.canScheduleExactNotifications() ??
+        false;
+  }
+
+  Future<bool> requestExactPermission() async {
+    if (await canScheduleExactly()) return true;
+    return await _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >()
+            ?.requestExactAlarmsPermission() ??
+        false;
   }
 
   // ==================== NOTIFICATION ID ====================
@@ -90,7 +117,7 @@ class TaskReminderService {
   }
 
   // Payload chứa dữ liệu dùng để so sánh lịch.
-  String _payload(TaskEntity task) {
+  String _payload(TaskEntity task, AndroidScheduleMode mode) {
     final timestamp = task.reminderAt!.toUtc().millisecondsSinceEpoch;
 
     return '$_taskPrefix'
@@ -98,12 +125,22 @@ class TaskReminderService {
         '${Uri.encodeComponent(task.id)}:'
         '$timestamp:'
         '${Uri.encodeComponent(task.title)}:'
-        '${AppStrings.current.localeName}';
+        '${AppStrings.current.localeName}:${mode.name}:v2';
   }
 
   // ==================== SCHEDULE ====================
 
   Future<void> scheduleReminder(TaskEntity task) async {
+    final mode = await canScheduleExactly()
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
+    await _scheduleReminder(task, mode);
+  }
+
+  Future<void> _scheduleReminder(
+    TaskEntity task,
+    AndroidScheduleMode mode,
+  ) async {
     await initialize();
 
     final id = _notificationId(task);
@@ -120,17 +157,29 @@ class TaskReminderService {
       return;
     }
 
-    await _plugin.zonedSchedule(
-      id: id,
-      title: AppStrings.current.taskReminders,
-      body: AppStrings.current.reminderBody(task.title),
-      scheduledDate: tz.TZDateTime.from(reminderAt, tz.local),
-      notificationDetails: _notificationDetails,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      payload: _payload(task),
-    );
-
-    debugPrint('[Reminder] Scheduled: ${task.title}');
+    try {
+      await _plugin.zonedSchedule(
+        id: id,
+        title: AppStrings.current.taskReminders,
+        body: AppStrings.current.reminderBody(task.title),
+        scheduledDate: tz.TZDateTime.from(reminderAt, tz.local),
+        notificationDetails: _notificationDetails,
+        androidScheduleMode: mode,
+        payload: _payload(task, mode),
+      );
+    } on PlatformException catch (error) {
+      // Permission can be revoked between checking and scheduling.
+      if (mode == AndroidScheduleMode.exactAllowWhileIdle &&
+          error.code == 'exact_alarms_not_permitted') {
+        await _scheduleReminder(
+          task,
+          AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+        return;
+      }
+      rethrow;
+    }
+    debugPrint('[Reminder] Scheduled: ${task.title} ($mode)');
   }
 
   // ==================== CANCEL ====================
@@ -174,6 +223,14 @@ class TaskReminderService {
           task.reminderAt!.isAfter(now);
     }).toList();
 
+    if (activeTasks.isNotEmpty && !_permissionRequested) {
+      _permissionRequested = true;
+      await requestPermission();
+    }
+    final mode = await canScheduleExactly()
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
+
     // Đọc các thông báo còn chờ trên Android.
     final pending = await _plugin.pendingNotificationRequests();
 
@@ -208,11 +265,11 @@ class TaskReminderService {
       final existing = pendingById[id];
 
       // Không đặt lại lịch không thay đổi.
-      if (existing?.payload == _payload(task)) {
+      if (existing?.payload == _payload(task, mode)) {
         continue;
       }
 
-      await scheduleReminder(task);
+      await _scheduleReminder(task, mode);
     }
 
     debugPrint('[Reminder] Synced ${activeTasks.length} tasks');

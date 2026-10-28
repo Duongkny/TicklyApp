@@ -337,5 +337,14 @@
         "type": "String"
       }
     }
-  }
+  },
+  "enableRemindersPrompt": "Nhắc việc đang tắt. Bật để nhận thông báo cho công việc này?",
+  "enableReminders": "Bật nhắc việc",
+  "reminderMayBeDelayed": "Chưa được phép nhắc đúng giờ. Android có thể gửi thông báo trễ. Bạn có thể cấp quyền trong Cài đặt → Nhắc đúng giờ.",
+  "exactReminders": "Nhắc đúng giờ",
+  "exactRemindersDescription": "Cho phép Tickly đặt báo thức và lời nhắc đúng giờ đã chọn.",
+  "exactRemindersEnabled": "Đã cho phép nhắc đúng giờ và cập nhật lịch nhắc.",
+  "notificationTest": "Gửi thông báo thử",
+  "notificationTestSent": "Đã gửi thông báo thử. Kiểm tra thanh thông báo của điện thoại.",
+  "notificationSystemSettings": "Cài đặt thông báo trên điện thoại"
 }

@@ -1,3 +1,5 @@
+import 'package:tickly/src/core/presentation/widget/input_field.dart';
+import 'package:tickly/src/core/notification/reminder_permissions.dart';
 import 'package:tickly/src/core/localization/date_formatting.dart';
 import 'package:tickly/src/core/extensions/context.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -112,6 +114,13 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       return;
     }
 
+    if (!await prepareTaskReminder(context) || !mounted) return;
+    if (!selected.isAfter(DateTime.now())) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.loc.reminderMustBeFuture)));
+      return;
+    }
     setState(() {
       _reminderAt = selected;
     });
@@ -228,7 +237,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               padding: const EdgeInsets.all(20),
               children: [
                 // ==================== TITLE ====================
-                TextFormField(
+                InputField(
                   controller: _titleController,
                   maxLength: 200,
                   textCapitalization: TextCapitalization.sentences,
@@ -249,8 +258,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 const SizedBox(height: 16),
 
                 // ==================== DESCRIPTION ====================
-                TextFormField(
+                InputField(
                   controller: _descriptionController,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
                   maxLines: 4,
                   decoration: InputDecoration(
                     labelText: context.loc.taskDescriptionLabel,

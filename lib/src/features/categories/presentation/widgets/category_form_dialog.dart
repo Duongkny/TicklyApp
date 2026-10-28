@@ -1,3 +1,4 @@
+import 'package:tickly/src/core/presentation/widget/input_field.dart';
 import 'package:tickly/src/core/extensions/context.dart';
 
 import 'package:flutter/material.dart';
@@ -83,7 +84,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
+              InputField(
                 controller: _nameController,
                 autofocus: false,
                 maxLength: 50,

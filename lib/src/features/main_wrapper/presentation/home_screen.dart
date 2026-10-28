@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tickly/src/core/notification/task_reminder_service.dart';
 import 'package:tickly/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:tickly/src/core/presentation/widget/tickly_logo.dart';
@@ -29,7 +31,40 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refreshReminders();
+  }
+
+  Future<void> _refreshReminders() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final tasks = context.read<TaskBloc>().state;
+    if (user == null || tasks.status != TaskStatusView.success) return;
+    try {
+      await TaskReminderService.instance.syncReminders(tasks.tasks, user.uid);
+    } catch (error) {
+      debugPrint('[Reminder] Resume sync failed: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.loc.reminderUpdateFailed)),
+        );
+      }
+    }
+  }
+
   // null: tất cả; '': chưa phân loại; ID: danh mục cụ thể.
   String? _selectedCategoryId;
   int _tab = 0;

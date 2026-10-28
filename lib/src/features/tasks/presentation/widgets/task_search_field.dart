@@ -1,3 +1,4 @@
+import 'package:tickly/src/core/presentation/widget/input_field.dart';
 import 'package:tickly/src/core/extensions/context.dart';
 
 import 'package:flutter/material.dart';
@@ -47,7 +48,7 @@ class _TaskSearchFieldState extends State<TaskSearchField> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return TextField(
+    return InputField(
       controller: _controller,
       onChanged: widget.onChanged,
       textInputAction: TextInputAction.search,

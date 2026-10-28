@@ -261,5 +261,14 @@
   "categoryChartSummary": "{tasks, plural, =1{1 task} other{{tasks} tasks}} in {categories, plural, =1{1 category} other{{categories} categories}}",
   "overdueAt": "Overdue · {time}",
   "dueAt": "Due: {time}",
-  "calendarDate": "{date}"
+  "calendarDate": "{date}",
+  "enableRemindersPrompt": "Reminders are off. Enable them to receive a notification for this task?",
+  "enableReminders": "Enable reminders",
+  "reminderMayBeDelayed": "Exact reminder permission is off. Android may delay notifications. Enable it in Settings → On-time reminders.",
+  "exactReminders": "On-time reminders",
+  "exactRemindersDescription": "Allow Tickly to schedule alarms and reminders at the selected time.",
+  "exactRemindersEnabled": "On-time reminders are allowed and schedules have been updated.",
+  "notificationTest": "Send test notification",
+  "notificationTestSent": "Test notification sent. Check your phone’s notification tray.",
+  "notificationSystemSettings": "Phone notification settings"
 }

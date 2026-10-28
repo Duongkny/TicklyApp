@@ -1,3 +1,5 @@
+import 'package:tickly/src/core/presentation/widget/input_field.dart';
+import 'package:app_settings/app_settings.dart';
 import '../../../core/localization/ui/widget/language_selector_tile.dart';
 import 'package:tickly/src/core/extensions/context.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -54,6 +56,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _testNotification() async {
+    final loc = context.loc;
+    setState(() => _busy = true);
+    try {
+      final service = TaskReminderService.instance;
+      if (!await service.requestPermission()) {
+        _message(loc.notificationPermissionHint);
+        return;
+      }
+      await service.showTestNotification();
+      _message(loc.notificationTestSent);
+    } catch (_) {
+      _message(loc.reminderUpdateFailed);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _enableExactReminders() async {
+    final loc = context.loc;
+    setState(() => _busy = true);
+    try {
+      final service = TaskReminderService.instance;
+      final allowed = await service.requestExactPermission();
+      if (!mounted) return;
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await service.syncReminders(
+          context.read<TaskBloc>().state.tasks,
+          user.uid,
+        );
+      }
+      _message(allowed ? loc.exactRemindersEnabled : loc.reminderMayBeDelayed);
+    } catch (_) {
+      _message(loc.reminderUpdateFailed);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _profile() async {
     final loc = context.loc;
     final user = FirebaseAuth.instance.currentUser;
@@ -63,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(loc.profileTitle),
-        content: TextField(
+        content: InputField(
           controller: controller,
           autofocus: true,
           maxLength: 80,
@@ -295,6 +337,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       title: Text(context.loc.taskReminders),
                       value: _notifications,
                       onChanged: busy ? null : _toggleNotifications,
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.alarm_on_outlined),
+                      title: Text(context.loc.exactReminders),
+                      subtitle: Text(context.loc.exactRemindersDescription),
+                      onTap: busy ? null : _enableExactReminders,
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.notification_add_outlined),
+                      title: Text(context.loc.notificationTest),
+                      onTap: busy ? null : _testNotification,
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.settings_outlined),
+                      title: Text(context.loc.notificationSystemSettings),
+                      onTap: () async {
+                        try {
+                          await AppSettings.openAppSettings(
+                            type: AppSettingsType.notification,
+                          );
+                        } catch (_) {
+                          if (context.mounted) {
+                            _message(context.loc.notificationPermissionHint);
+                          }
+                        }
+                      },
                     ),
                     ListTile(
                       leading: const Icon(Icons.palette_outlined),

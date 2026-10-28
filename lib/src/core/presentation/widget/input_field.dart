@@ -1,14 +1,19 @@
 import 'package:tickly/src/core/localization/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tickly/src/core/extensions/context.dart';
 import '../../utils/validators.dart';
 
 class InputField extends StatefulWidget {
   const InputField({
     required this.controller,
-    required this.textInputAction,
+    this.textInputAction,
+    this.decoration,
+    this.maxLines = 1,
+    this.minLines,
+    this.maxLength,
+    this.autofocus = false,
+    this.textCapitalization = TextCapitalization.none,
     this.keyboardType = TextInputType.text,
     this.errorText,
     this.hintText,
@@ -180,7 +185,16 @@ class InputField extends StatefulWidget {
          },
        );
   final TextEditingController controller;
-  final TextInputAction textInputAction;
+  final TextInputAction? textInputAction;
+
+  /// Optional decoration for specialized fields, such as search or descriptions.
+  /// Shared hint, prefix and error parameters override matching decoration values.
+  final InputDecoration? decoration;
+  final int? maxLines;
+  final int? minLines;
+  final int? maxLength;
+  final bool autofocus;
+  final TextCapitalization textCapitalization;
   final TextInputType keyboardType;
   final String? errorText;
   final bool enabled;
@@ -224,6 +238,11 @@ class _InputFieldState extends State<InputField> {
 
     return TextFormField(
       controller: widget.controller,
+      autofocus: widget.autofocus,
+      textCapitalization: widget.textCapitalization,
+      maxLength: widget.maxLength,
+      maxLines: _isPassword ? 1 : widget.maxLines,
+      minLines: _isPassword ? null : widget.minLines,
       onChanged: widget.onChanged,
       keyboardType: widget.keyboardType,
       textInputAction: widget.textInputAction,
@@ -234,45 +253,57 @@ class _InputFieldState extends State<InputField> {
       validator: validator,
       autofillHints: widget.autofillHints,
       onFieldSubmitted: widget.onFieldSubmitted,
-      decoration: InputDecoration(
-        border: OutlineInputBorder(
-          gapPadding: 0,
-          borderRadius: BorderRadius.all(Radius.circular(12.r)),
-          borderSide: BorderSide(color: context.colorScheme.outline),
-        ),
-        counterStyle: context.textTheme.bodyLarge?.copyWith(
-          color: context.colorScheme.onSurface,
-        ),
-        hintStyle: context.textTheme.bodyLarge?.copyWith(
-          color: context.colorScheme.outline,
-        ),
-        errorText: widget.errorText,
-        hintText:
-            widget.hintText ??
-            switch (widget.keyboardType) {
-              TextInputType.name => context.loc.fullName,
-              TextInputType.emailAddress => context.loc.commonEmail,
-              TextInputType.visiblePassword => context.loc.commonPassword,
-              TextInputType.datetime => context.loc.inputDateOfBirth,
-              TextInputType.number ||
-              TextInputType.phone => context.loc.inputNumber,
-              _ => null,
-            },
-        prefixIcon: widget.prefixIcon,
-        prefixIconColor: context.colorScheme.primary,
-        suffixIconColor: widget.errorText == null
-            ? context.colorScheme.primary
-            : context.colorScheme.error,
-        suffixIcon: _isPassword
-            ? IconButton(
-                autofocus: false,
-                onPressed: () => setState(() => _obscureText = !_obscureText),
-                icon: _obscureText
-                    ? Icon(Icons.visibility_off, size: 28.r)
-                    : Icon(Icons.visibility_sharp, size: 28.r),
-              )
-            : null,
-      ),
+      decoration:
+          (widget.decoration ??
+                  InputDecoration(
+                    border: OutlineInputBorder(
+                      gapPadding: 0,
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide(
+                        color: context.colorScheme.outline,
+                      ),
+                    ),
+                    counterStyle: context.textTheme.bodyLarge?.copyWith(
+                      color: context.colorScheme.onSurface,
+                    ),
+                    hintStyle: context.textTheme.bodyLarge?.copyWith(
+                      color: context.colorScheme.outline,
+                    ),
+                    prefixIconColor: context.colorScheme.primary,
+                    suffixIconColor: context.colorScheme.primary,
+                  ))
+              .copyWith(
+                errorText: widget.errorText ?? widget.decoration?.errorText,
+                hintText:
+                    widget.hintText ??
+                    widget.decoration?.hintText ??
+                    switch (widget.keyboardType) {
+                      TextInputType.name => context.loc.fullName,
+                      TextInputType.emailAddress => context.loc.commonEmail,
+                      TextInputType.visiblePassword =>
+                        context.loc.commonPassword,
+                      TextInputType.datetime => context.loc.inputDateOfBirth,
+                      TextInputType.number ||
+                      TextInputType.phone => context.loc.inputNumber,
+                      _ => null,
+                    },
+                prefixIcon: widget.prefixIcon ?? widget.decoration?.prefixIcon,
+                suffixIconColor: widget.errorText == null
+                    ? (widget.decoration?.suffixIconColor ??
+                          context.colorScheme.primary)
+                    : context.colorScheme.error,
+                suffixIcon: _isPassword
+                    ? IconButton(
+                        autofocus: false,
+                        onPressed: widget.enabled
+                            ? () => setState(() => _obscureText = !_obscureText)
+                            : null,
+                        icon: _obscureText
+                            ? Icon(Icons.visibility_off, size: 28)
+                            : Icon(Icons.visibility_sharp, size: 28),
+                      )
+                    : widget.decoration?.suffixIcon,
+              ),
     );
   }
 }

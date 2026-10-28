@@ -138,7 +138,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                         SizedBox(height: 32.h),
 
-                        TextFormField(
+                        InputField(
                           controller: _nameController,
                           enabled: !isLoading,
                           textCapitalization: TextCapitalization.words,

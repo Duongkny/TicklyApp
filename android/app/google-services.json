@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "441146388946",
+    "project_id": "tickly-dev",
+    "storage_bucket": "tickly-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:441146388946:android:490d5f02c47e3f9733180b",
+        "android_client_info": {
+          "package_name": "com.tickly.app.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4i_ntAXhM22Y_ryeMd0-1Jmswwv65UEQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

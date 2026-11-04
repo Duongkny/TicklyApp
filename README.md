@@ -1,335 +1,447 @@
-# Tickly — Ứng dụng quản lý công việc
+# Tickly — Ứng dụng quản lý công việc cá nhân
 
-Tickly là ứng dụng quản lý công việc (To-Do List) phát triển bằng **Flutter**, sử dụng **Firebase Authentication**, **Cloud Firestore** và **BLoC**, theo định hướng **Clean Architecture**. Ứng dụng hỗ trợ tạo và quản lý công việc, phân loại danh mục, lịch công việc, nhắc nhở cục bộ và thống kê tiến độ.
+> Hướng dẫn dành cho thành viên mới: cài đặt môi trường, cấu hình Firebase, tạo mã nguồn tự động (Injectable / Hive CE), chạy và đóng gói ứng dụng Flutter trên Android.
 
-> Tài liệu này dựa trên cấu hình dự án Tickly đã trao đổi. Tên một số tệp cấu hình Firebase và tên entry point có thể cần đối chiếu với nhánh mã nguồn thực tế trước khi chạy.
+## 1. Giới thiệu
 
-## 1. Công nghệ sử dụng
+**Tickly** là ứng dụng quản lý công việc cá nhân xây dựng bằng **Flutter**, **Firebase** và **Clean Architecture + BLoC**.
+
+Các chức năng hiện có theo phạm vi dự án:
+
+- **Tài khoản:** đăng ký (họ tên, email, mật khẩu), đăng nhập email/Google, xác minh email, quên mật khẩu, giữ phiên đăng nhập và đăng xuất.
+- **Công việc:** tạo/xem/sửa/xóa, đánh dấu hoàn thành, mô tả, mức ưu tiên, danh mục, hạn hoàn thành, nhắc nhở.
+- **Khám phá công việc:** tìm kiếm, lọc theo thời gian/danh mục, sắp xếp.
+- **Danh mục:** tạo, đổi tên, chọn màu, xóa, xem công việc theo danh mục.
+- **Calendar:** lịch tháng/tuần, chọn ngày, đánh dấu ngày có công việc.
+- **Reminder:** thông báo Android, xin quyền, đặt/cập nhật/hủy lịch và kiểm tra thông báo thử nghiệm.
+- **Statistics:** tổng quan công việc, tỷ lệ hoàn thành, biểu đồ 7/30 ngày và phân bố danh mục.
+- **Cài đặt:** thông tin tài khoản, theme sáng/tối/hệ thống, ngôn ngữ Việt/Anh, tùy chọn ứng dụng.
+
+### Công nghệ chính
 
 | Thành phần | Công nghệ |
 | --- | --- |
-| Giao diện | Flutter, Dart, Material 3 (Light/Dark Theme) |
-| Quản lý trạng thái | `flutter_bloc` |
-| Điều hướng | `go_router` |
-| Dependency Injection | `get_it`, `injectable` |
-| Xác thực | Firebase Authentication (Email/Password, Google Sign-In) |
-| Dữ liệu đám mây | Cloud Firestore |
-| Lưu trữ cục bộ | Hive / Hive CE (nếu được sử dụng trong nhánh hiện tại) |
-| Nhắc nhở | `flutter_local_notifications`, `timezone`, `flutter_timezone` |
-| Biến môi trường | `flutter_dotenv` |
-| Đa môi trường | Android flavors `development` và `production` |
+| Mobile | Flutter / Dart |
+| State management | `flutter_bloc` |
+| Architecture | Clean Architecture: `data` / `domain` / `presentation` |
+| Dependency injection | `get_it` + `injectable` + `injectable_generator` |
+| Backend / Auth | Firebase Authentication |
+| Cloud database | Cloud Firestore |
+| Dữ liệu và tùy chọn cục bộ | Hive CE (`hive_ce`, `hive_ce_flutter`) |
+| Routing | `go_router` |
+| Thông báo | `flutter_local_notifications`, `timezone`, `flutter_timezone`; dự án còn có `awesome_notifications` / `firebase_messaging` |
+| Crash / Analytics | Firebase Crashlytics / Analytics |
+| Android build | Gradle Kotlin DSL, JDK 17, flavors `development` / `production` |
 
-## 2. Chức năng chính
+## 2. Yêu cầu trước khi chạy
 
-- Đăng nhập, đăng ký, xác minh email, quên mật khẩu và ghi nhớ phiên đăng nhập bằng Firebase Auth.
-- Tạo, chỉnh sửa, hoàn thành, xóa và tìm kiếm công việc; phân loại theo mức ưu tiên.
-- Quản lý danh mục công việc (Category).
-- Calendar: xem công việc theo ngày.
-- Reminder: đặt giờ thông báo trên thiết bị Android.
-- Statistics: tổng quan số công việc, tiến độ hoàn thành và biểu đồ theo thời gian (tùy phiên bản mã nguồn).
-- Giao diện Material 3, hỗ trợ Light/Dark Mode.
+- Windows 10/11, VS Code (hoặc Android Studio).
+- Flutter SDK tương thích với ràng buộc Dart trong `pubspec.yaml` (ở snapshot đã cung cấp: Dart `^3.12.2`). **Kiểm tra Flutter/Dart thực tế trước khi chạy**.
+- Android SDK, Android SDK Command-line Tools, Android Platform Tools (`adb`), giấy phép Android SDK đã chấp nhận.
+- **JDK 17** cho cấu hình Android hiện tại của dự án.
+- Thiết bị Android bật *USB debugging* hoặc Android Emulator.
+- Quyền truy cập Firebase project tương ứng nếu cần tạo/tải lại cấu hình.
+- Kết nối Internet khi tải packages và sử dụng dịch vụ Firebase.
 
-## 3. Yêu cầu môi trường
-
-Cài đặt các công cụ sau:
-
-1. **Flutter SDK** và Dart đi kèm Flutter (dùng phiên bản tương thích với `pubspec.yaml`).
-2. **Android Studio** hoặc VS Code với Flutter/Dart extensions.
-3. **Android SDK**, thiết bị Android thật hoặc emulator.
-4. **JDK 17** cho bản cấu hình Android hiện tại của Tickly.
-5. **Git**.
-6. Tài khoản Firebase có quyền truy cập dự án Firebase dùng cho môi trường phát triển.
-
-Kiểm tra:
+Kiểm tra môi trường bằng PowerShell:
 
 ```powershell
 flutter --version
+dart --version
 flutter doctor -v
-java -version
+flutter doctor --android-licenses
 adb devices
 ```
 
-> Nếu `flutter doctor` báo thiếu Android SDK licenses, chạy `flutter doctor --android-licenses` và chấp nhận các điều khoản cần thiết.
+Nếu `flutter doctor` báo thiếu SDK, cmdline-tools hoặc licenses, hãy xử lý trước khi build.
 
-## 4. Tải mã nguồn và cài dependency
+## 3. Clone dự án và cài dependencies
 
 ```powershell
 git clone <REPOSITORY_URL>
-cd tickly
+cd <THU_MUC_DU_AN>
 flutter pub get
 ```
 
-Nếu đã có mã nguồn thì chỉ cần mở thư mục gốc chứa `pubspec.yaml` và chạy:
+> Thay `<REPOSITORY_URL>` bằng repo chính thức của nhóm. Chạy toàn bộ lệnh từ thư mục có `pubspec.yaml`.
+
+Để kiểm tra dependencies đã được nhận:
 
 ```powershell
-flutter pub get
+flutter pub deps
+flutter analyze
 ```
 
-**Không** chạy lệnh trong thư mục `android/` hoặc `lib/`; các lệnh Flutter bên dưới chạy tại thư mục gốc dự án.
+**Không** chạy `flutter pub upgrade --major-versions` chỉ để setup ban đầu: việc nâng major có thể phá tính tương thích với mã nguồn hiện tại.
 
-## 5. Cấu hình biến môi trường
+## 4. Môi trường Development và Production
 
-Dự án sử dụng hai tệp cấu hình:
+Dự án có hai Android flavors:
 
-```text
-.env.development
-.env.production
-```
+| Flavor | Tên dự kiến | Application ID | Mục đích |
+| --- | --- | --- | --- |
+| `development` | Tickly Dev | `com.tickly.app.dev` | Phát triển/kiểm thử |
+| `production` | Tickly | `com.tickly.app` | Bản chính thức |
 
-Nếu repository cung cấp `.env.example`, tạo các file tương ứng từ file mẫu:
+Các ID trên phản ánh cấu hình đã thảo luận; hãy đối chiếu **`android/app/build.gradle.kts`** của repo hiện tại. Không tự đổi `applicationId` sau khi đã đăng ký Firebase mà chưa cập nhật Firebase Android app.
 
-```powershell
-Copy-Item .env.example .env.development
-Copy-Item .env.example .env.production
-```
+### File môi trường `.env`
 
-Ví dụ nội dung (chỉ là khóa mẫu theo cấu hình Tickly đã trao đổi):
-
-```dotenv
-API_URL=https://example.com
-IV_UTF8=replace-with-your-development-value
-```
-
-Điền giá trị thực tế theo cấu hình dự án. **Không sao chép nguyên giá trị ví dụ để dùng như môi trường hoạt động.** Nếu nhánh hiện tại chỉ sử dụng Firebase mà không có REST API riêng, hãy kiểm tra lớp `Environment` xem `API_URL` còn bắt buộc hay không.
-
-Kiểm tra trong `pubspec.yaml` đã khai báo assets cho các tệp `.env` mà ứng dụng cần load:
+`pubspec.yaml` đang khai báo:
 
 ```yaml
 flutter:
+  generate: true
+  uses-material-design: true
   assets:
     - .env.development
     - .env.production
 ```
 
-> Không commit mật khẩu, service account, refresh token hoặc dữ liệu bí mật vào Git. Thêm các tệp `.env` chứa giá trị nhạy cảm vào `.gitignore` và giữ `.env.example` không chứa bí mật. Những giá trị được đóng gói trong app Flutter vẫn có thể bị trích xuất từ ứng dụng; không coi `.env` phía client là kho lưu bí mật an toàn.
+Nếu clone repo không có các file `.env.*` (do `.gitignore`), hãy yêu cầu người quản lý cung cấp giá trị cấu hình hợp lệ, hoặc tạo chúng từ `.env.example` nếu repo có mẫu.
 
-## 6. Cấu hình Firebase
+Mẫu **chỉ để minh họa** (tên khóa dựa trên `Environment` từng sử dụng, hãy đối chiếu mã nguồn):
 
-### 6.1. Tạo hoặc chọn Firebase project
-
-- Mở [Firebase Console](https://console.firebase.google.com/).
-- Chọn dự án Firebase cho Tickly Development (dự án đã dùng trong quá trình phát triển: `tickly-dev-da871`) hoặc dự án Production tương ứng.
-- Bật **Authentication** và phương thức đăng nhập mà ứng dụng sử dụng, chẳng hạn **Email/Password** và **Google**.
-- Tạo **Cloud Firestore** và triển khai Security Rules phù hợp với các collection Task và Category.
-
-### 6.2. Kết nối Android application ID theo flavor
-
-Trong Tickly, flavor Development đã được sử dụng với application ID:
-
-```text
-com.tickly.app.dev
+```dotenv
+# .env.development
+API_URL=<DEVELOPMENT_API_URL_IF_USED>
+IV_UTF8=<VALUE_IF_REQUIRED_BY_PROJECT>
 ```
 
-Kiểm tra `android/app/build.gradle.kts` để xác nhận `applicationId` của Production và `applicationIdSuffix` của Development. **Mỗi application ID phải được đăng ký đúng với Firebase Android app tương ứng.**
-
-Dựa trên cách dự án cấu hình Firebase, bạn có thể gặp một trong hai cách:
-
-**Cách A — Google Services JSON theo flavor** (nếu Gradle đã cấu hình):
-
-```text
-android/app/src/development/google-services.json
-android/app/src/production/google-services.json
+```dotenv
+# .env.production
+API_URL=<PRODUCTION_API_URL_IF_USED>
+IV_UTF8=<VALUE_IF_REQUIRED_BY_PROJECT>
 ```
 
-**Cách B — Firebase Options qua FlutterFire CLI:**
+**Cảnh báo quan trọng:** Nếu `Environment.initialize()` chọn `.env.production` bằng `kReleaseMode`, thì `flutter build apk --release --flavor development` cũng có thể tải `.env.production`. **Flavor và build mode là hai khái niệm khác nhau.** Trước khi phát hành, kiểm tra lại logic chọn `.env` trong mã nguồn và xác nhận ứng dụng đang kết nối đúng môi trường. Không giả định `--flavor` tự chuyển file `.env`.
+
+Không commit mật khẩu, private key, service-account JSON hoặc các secret thực sự lên Git. `flutter_dotenv` đóng gói các file `.env` vào ứng dụng; vì vậy các giá trị trong đó **không được xem là bí mật an toàn trên client**.
+
+## 5. Cấu hình Firebase (bắt buộc)
+
+Tickly sử dụng các Firebase projects riêng cho từng môi trường. Theo cấu hình đã trao đổi trước đây:
+
+- Development: **`tickly-dev-da871`**.
+- Production: **`tickly-prod`**.
+
+Kiểm tra tên/ID thực tế tại [Firebase Console](https://console.firebase.google.com/).
+
+### 5.1 Cài Firebase CLI và FlutterFire CLI
+
+Cài Firebase CLI theo [hướng dẫn chính thức](https://firebase.google.com/docs/cli) (cần Node.js nếu cài qua npm), sau đó:
 
 ```powershell
+firebase --version
+firebase login
 dart pub global activate flutterfire_cli
-flutterfire configure
+flutterfire --version
 ```
 
-Sau đó xác nhận file Firebase Options được `main.dart` import và ứng dụng gọi `Firebase.initializeApp(...)` với lựa chọn cấu hình đúng flavor. **Không cấu hình tùy tiện cả hai cách nếu mã nguồn chưa hỗ trợ**; hãy đối chiếu `main.dart`, Gradle và các file Firebase hiện có.
+Nếu PowerShell báo `flutterfire` không được nhận diện, thêm Pub Cache `bin` vào PATH của Windows (thường là `%LOCALAPPDATA%\Pub\Cache\bin`), mở Terminal mới rồi thử lại.
 
-Nếu đăng nhập Google, cần cấu hình SHA-1/SHA-256 và các yêu cầu OAuth tương ứng trong Firebase; có thể kiểm tra fingerprint debug bằng:
+### 5.2 Kết nối Firebase Android theo flavor
+
+Vào Firebase Console → chọn project → **Project settings → Your apps**. Mỗi project phải có Android app khớp với `applicationId`:
+
+- Development: `com.tickly.app.dev`.
+- Production: `com.tickly.app`.
+
+Tải `google-services.json` tương ứng, đặt tại:
+
+```text
+android/app/src/
+├── development/
+│   └── google-services.json  # Firebase Development
+└── production/
+    └── google-services.json  # Firebase Production
+```
+
+**Không hoán đổi hai file**. Kiểm tra trường `package_name` trong `google-services.json` khớp với `applicationId` của flavor.
+
+Nếu repo dùng FlutterFire options riêng, có thể tạo hoặc cập nhật bằng CLI:
+
+```powershell
+flutterfire configure --project=tickly-dev-da871 --platforms=android --android-package-name=com.tickly.app.dev --out=lib/src/core/firebase/firebase_options_dev.dart
+flutterfire configure --project=tickly-prod --platforms=android --android-package-name=com.tickly.app --out=lib/src/core/firebase/firebase_options_prod.dart
+```
+
+> **Chỉ chạy khi cần tạo/cập nhật config**, và kiểm tra cú pháp CLI bằng `flutterfire configure --help` vì CLI có thể thay đổi. CLI có thể điều chỉnh Gradle/Android config; hãy xem `git diff` sau khi chạy để bảo đảm không làm lệch các flavor. Đường dẫn `lib/src/core/firebase/...` là gợi ý, cần khớp import thực tế trong repo.
+
+Trong ứng dụng, Firebase phải được khởi tạo **trước `runApp()`**, dùng Firebase options đúng flavor (hoặc cấu hình native Android đã xác minh đúng). Ví dụ nguyên lý:
+
+```dart
+WidgetsFlutterBinding.ensureInitialized();
+await Firebase.initializeApp(
+  options: selectedFirebaseOptions, // Chọn đúng development / production
+);
+runApp(const App());
+```
+
+Đây là minh họa, **không dán nguyên** nếu `main.dart` đã khởi tạo Firebase. Cần bảo đảm không gọi `Firebase.initializeApp()` trùng lặp hoặc chọn nhầm project.
+
+### 5.3 Bật các dịch vụ Firebase
+
+Trong Firebase Console cho **từng project**:
+
+1. **Authentication → Sign-in method**: bật Email/Password và Google nếu ứng dụng sử dụng.
+2. **Firestore Database**: tạo database, chọn region phù hợp, triển khai **Security Rules của dự án** (không sử dụng `allow read, write: if true`).
+3. **Analytics / Crashlytics**: kiểm tra cấu hình nếu dự án bật hai dịch vụ này.
+4. **Cloud Messaging**: kiểm tra khi tính năng FCM được sử dụng. Nhắc việc cục bộ bằng `flutter_local_notifications` không yêu cầu FCM cho từng lịch Task.
+
+Với Google Sign-In trên Android, cần đăng ký SHA-1/SHA-256 của certificate tương ứng (debug hoặc release), rồi cập nhật cấu hình Firebase khi cần. Có thể xem debug SHA bằng:
 
 ```powershell
 cd android
-.\gradlew signingReport
+.\gradlew.bat signingReport
 cd ..
 ```
 
-### 6.3. Firestore Security Rules
+**Giữ an toàn keystore release và mật khẩu**. Không chia sẻ service-account private key.
 
-Rules hiện tại của Tickly dùng đường dẫn:
+### 5.4 Firestore collections và Rules
+
+Cấu trúc dữ liệu chính:
 
 ```text
-users/{userId}/tasks/{taskId}
-users/{userId}/categories/{categoryId}
+users/{uid}/
+├── tasks/{taskId}
+│   ├── userId, title, description, categoryId
+│   ├── priority, status
+│   ├── dueDate, reminderAt, completedAt
+│   └── createdAt, updatedAt
+└── categories/{categoryId}
+    ├── userId, name, colorValue
+    └── createdAt, updatedAt
 ```
 
-Với cấu hình đã thảo luận, người dùng phải đăng nhập, đúng UID và xác minh email để truy cập dữ liệu. Nếu bạn đã bổ sung `completedAt` vào Task, **Rules phải cho phép trường này** (nullable hoặc timestamp, theo nghiệp vụ).
+`dueDate`, `reminderAt` và `completedAt` có thể `null`; các mốc thời gian sử dụng Firestore `Timestamp`. Khi thêm trường mới vào `TaskModel.toFirestore()`, phải kiểm tra Rules `hasOnly([...])`: từng có lỗi `PERMISSION_DENIED` vì thiếu `completedAt` trong danh sách trường cho phép.
 
-Không thay Rules thành `allow read, write: if true` để khắc phục lỗi quyền truy cập.
+Sau khi sửa Rules, nhấn **Publish** và kiểm thử tạo/sửa/xóa dưới tài khoản đã xác minh email. Đối với dữ liệu thử nghiệm, thao tác thực hiện trên project Development.
 
-## 7. Generate code (khi cần)
+## 6. Generate Dependency Injection — GetIt + Injectable
 
-Nếu dự án sử dụng `injectable_generator`, chạy:
+Tickly sử dụng:
+
+- `get_it`: container quản lý dependency.
+- `injectable`: annotation như `@injectable`, `@lazySingleton`, `@module`.
+- `injectable_generator` + `build_runner`: tạo file cấu hình đăng ký dependency.
+
+**Sau khi clone repo hoặc thay đổi các annotation**, chạy từ thư mục gốc:
 
 ```powershell
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-Chạy lại lệnh khi thêm/sửa annotation DI, model sinh code hoặc cấu hình generator. Sau đó xác nhận những tệp `*.config.dart` được tạo đúng vị trí mà code đang import.
-
-Nếu dự án dùng Flutter localization (`l10n.yaml`, `app_*.arb`):
+Nếu đang lập trình liên tục và muốn theo dõi thay đổi:
 
 ```powershell
-flutter gen-l10n
+dart run build_runner watch --delete-conflicting-outputs
 ```
 
-Đảm bảo `pubspec.yaml` có:
+Các file thường gặp (tên thực tế tùy mã nguồn):
+
+```text
+lib/src/core/injections/
+├── injections.dart
+├── injections.config.dart   # file generate — không tự viết tay
+└── ...                      # register module / providers
+```
+
+Kiểm tra `main.dart` đã gọi hàm khởi tạo DI thực tế của dự án **trước khi dùng `getIt<T>()`**. Tên hàm có thể là `configureDependencies()`, `initDependencies()` hoặc tên khác: hãy tìm trong `injections.dart`, không đoán.
+
+Nếu gặp `GetIt: Object/factory with type ... is not registered`:
+
+1. Kiểm tra class có annotation đúng.
+2. Kiểm tra `@module` cung cấp `FirebaseAuth`, `FirebaseFirestore`, Hive hoặc các service bắt buộc.
+3. Chạy lại `build_runner`.
+4. Đảm bảo hàm khởi tạo DI đã chạy trước khi tạo BLoC/router.
+
+## 7. Generate Hive CE và khởi tạo dữ liệu cục bộ
+
+Dependencies đang dùng:
+
+```yaml
+dependencies:
+  hive_ce: ...
+  hive_ce_flutter: ...
+dev_dependencies:
+  hive_ce_generator: ...
+  build_runner: ...
+```
+
+Tickly dùng Hive CE cho dữ liệu hoặc tùy chọn ứng dụng lưu trên thiết bị. **Không lưu Firebase ID token/refresh token dưới dạng plain text trong Hive**; Firebase SDK tự quản lý phiên đăng nhập trên Android/iOS.
+
+### 7.1 Chạy code generation
+
+Nếu dự án có các class sử dụng adapter của Hive CE, dùng cùng lệnh generator:
+
+```powershell
+dart run build_runner build --delete-conflicting-outputs
+```
+
+Ví dụ file được tạo (chỉ khi dự án có cấu hình tương ứng):
+
+```text
+hive/
+├── hive_adapters.dart
+└── hive_adapters.g.dart
+```
+
+Hoặc `.g.dart` nằm cạnh model. **Không tự tạo các file `.g.dart`**; hãy kiểm tra comment `part` và annotation trong mã nguồn.
+
+### 7.2 Khởi tạo Hive trước khi sử dụng
+
+Mã minh họa:
+
+```dart
+WidgetsFlutterBinding.ensureInitialized();
+await Hive.initFlutter();
+// Đăng ký adapter được generate, nếu cấu trúc dự án yêu cầu.
+// Mở các box mà ứng dụng cần trước khi truy cập.
+```
+
+Chỉ áp dụng nếu dự án chưa khởi tạo Hive ở `main.dart`/bootstrap. Không đăng ký adapter hai lần. Tên box, đường dẫn lưu và cách khởi tạo adapters phải dựa vào code thực tế, không cần tạo box mới chỉ để chạy chương trình.
+
+## 8. Localization — Tiếng Việt / Tiếng Anh
+
+Kiểm tra `l10n.yaml` (nếu repo có) và:
 
 ```yaml
 flutter:
   generate: true
 ```
 
-Nếu nhánh hiện tại không dùng một trong các công cụ trên, bỏ qua bước tương ứng.
-
-## 8. Chạy ứng dụng trên Android
-
-### 8.1. Xem thiết bị
+Sinh lại localization:
 
 ```powershell
-flutter devices
+flutter gen-l10n
 ```
 
-### 8.2. Chạy môi trường Development
+Nếu xuất hiện lỗi về `generate: true`, kiểm tra vị trí khóa `generate` trong `pubspec.yaml`: nó phải nằm **bên dưới `flutter:`**, không phải khóa cấp cao nhất.
+
+## 9. Chạy ứng dụng Android
+
+**Lần đầu chạy**, thứ tự khuyến nghị:
 
 ```powershell
+flutter doctor -v
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+flutter gen-l10n
+flutter devices
 flutter run --flavor development -t lib/main.dart
 ```
 
-Nếu có nhiều thiết bị, chỉ định ID:
+Nếu có nhiều thiết bị, chọn ID từ `flutter devices`:
 
 ```powershell
 flutter run --flavor development -t lib/main.dart -d <DEVICE_ID>
 ```
 
-### 8.3. Chạy môi trường Production
+Chạy production trên thiết bị (chỉ khi Firebase Production đã cấu hình và được phép kiểm thử):
 
 ```powershell
 flutter run --flavor production -t lib/main.dart
 ```
 
-> Chỉ chạy Production khi đã có cấu hình Firebase và `.env.production` hợp lệ. Trong cấu hình Tickly đã trao đổi, file môi trường được lựa chọn dựa trên `kReleaseMode` (debug → development, release → production), **không hoàn toàn dựa vào tên flavor**. Vì thế `flutter run --flavor production` ở chế độ debug có thể vẫn đọc `.env.development`. Để tránh nhầm môi trường, hãy đối chiếu lại logic trong `Environment.initialize()` trước khi test hoặc phát hành Production.
+### Kiểm tra sau khi chạy
 
-### 8.4. Hot Reload / Hot Restart
+- Đăng ký/đăng nhập, Google Sign-In, xác minh email, đăng xuất.
+- Tạo Task, sửa, xóa, đánh dấu hoàn thành.
+- Firestore ghi đúng `createdAt`, `updatedAt`, `completedAt`.
+- Category, Calendar, Statistics cập nhật theo Task.
+- Reminder: xin quyền, đặt lịch, sửa/hủy lịch, thử khi app chạy nền.
+- Theme Light/Dark/System và VI/EN được lưu sau khi mở lại app.
 
-Trong Terminal đang chạy `flutter run`:
+Lưu ý: Android có thể trì hoãn thông báo dùng `AndroidScheduleMode.inexactAllowWhileIdle`; lịch nhắc **không được bảo đảm đến đúng từng phút** trên mọi thiết bị.
 
-- Nhấn `r` để Hot Reload.
-- Nhấn `R` để Hot Restart.
-- Nhấn `q` để thoát.
+## 10. Đóng gói APK / AAB
 
-## 9. Build APK / App Bundle
-
-Build APK Development:
-
-```powershell
-flutter build apk --flavor development -t lib/main.dart --debug
-```
-
-Build APK Production (release):
+Chỉ build bản phát hành khi đã cấu hình release signing và xác minh môi trường Firebase/.env:
 
 ```powershell
-flutter build apk --flavor production -t lib/main.dart --release
+# APK Development để kiểm thử
+flutter build apk --release --flavor development -t lib/main.dart
+
+# APK Production
+flutter build apk --release --flavor production -t lib/main.dart
+
+# AAB Production để phát hành Google Play
+flutter build appbundle --release --flavor production -t lib/main.dart
 ```
 
-Build Android App Bundle Production:
+Kiểm tra file đầu ra:
 
 ```powershell
-flutter build appbundle --flavor production -t lib/main.dart --release
+Get-ChildItem build\app\outputs\flutter-apk -Filter *.apk
+Get-ChildItem build\app\outputs\bundle -Recurse -Filter *.aab
 ```
 
-File được tạo trong `build/app/outputs/` (đường dẫn cụ thể tùy Flutter/Gradle và variant). Bản release muốn phát hành phải cấu hình ký ứng dụng (keystore/signing) đúng cách.
-
-## 10. Kiểm tra trước khi chạy
-
-- [ ] `flutter doctor -v` không còn lỗi nghiêm trọng.
-- [ ] Đã chạy `flutter pub get`.
-- [ ] File `.env.development` tồn tại và được khai báo trong `pubspec.yaml`.
-- [ ] Firebase được khởi tạo trước khi dùng Firebase Auth/Firestore.
-- [ ] Application ID của flavor trùng cấu hình Firebase Android app.
-- [ ] Email/Password và/hoặc Google provider đã bật trong Firebase Authentication.
-- [ ] Firestore Rules cho phép schema Task hiện tại, bao gồm `completedAt` nếu có.
-- [ ] Các tệp generate (`injectable`, localization) đã được tạo khi cần.
-- [ ] Thiết bị Android đã kết nối và được nhận diện qua `flutter devices`.
-- [ ] Ứng dụng được cấp quyền thông báo nếu kiểm thử Reminder.
+Release APK/AAB có thể yêu cầu keystore riêng. Không commit `android/key.properties`, `*.jks`, `*.keystore`. Release signing có thể khác debug signing; hãy thêm SHA certificate tương ứng vào Firebase nếu Google Sign-In cần.
 
 ## 11. Lỗi thường gặp
 
-| Lỗi / hiện tượng | Cách kiểm tra |
+| Triệu chứng | Kiểm tra / giải pháp |
 | --- | --- |
-| `PERMISSION_DENIED: Missing or insufficient permissions` | Kiểm tra Firestore Rules, UID, email verification và các trường mới như `completedAt`. |
-| `processDevelopmentDebugGoogleServices` thất bại | Kiểm tra `google-services.json`, application ID và vị trí file theo flavor. |
-| `Cannot find ... injection.config.dart` | Chạy `dart run build_runner build --delete-conflicting-outputs`; kiểm tra tên file và import thực tế. |
-| `flutter gen-l10n` không chạy | Kiểm tra `flutter: generate: true` và file `l10n.yaml`. |
-| Java/Gradle/Kotlin build lỗi | Kiểm tra JDK 17, cấu hình Java/Kotlin trong Gradle và tính tương thích các version plugin. |
-| Không thấy thông báo Reminder | Kiểm tra quyền thông báo, `reminderAt` là tương lai, lịch được Android tiếp nhận và hạn chế pin của MIUI. Lịch `inexactAllowWhileIdle` có thể đến trễ. |
-| Tự vào Home sau khi mở ứng dụng | Đây là cơ chế duy trì phiên Firebase Auth; đăng xuất để quay lại màn Sign In. |
-| `adb devices` không hiện máy | Kiểm tra USB debugging, quyền trust device và driver Android trên Windows. |
+| `flutterfire` not recognized | FlutterFire CLI đã activate chưa, Pub Cache `bin` đã vào PATH chưa. |
+| `No matching client found for package name` | `applicationId` và `google-services.json` sai flavor. |
+| Firebase kết nối nhầm môi trường | Kiểm tra `Firebase.initializeApp`, options thực tế, file native và logic `.env` (đặc biệt `kReleaseMode`). |
+| Firestore `PERMISSION_DENIED` khi tạo Task | Kiểm tra đăng nhập, xác minh email, Rules `hasOnly`, trường `completedAt` và UID. |
+| `injections.config.dart` không tồn tại | `dart run build_runner build --delete-conflicting-outputs`; kiểm tra annotation và `part`/import. |
+| Hive adapter không được tạo | Kiểm tra `hive_ce_generator`, annotation/adapter registration và chạy build_runner. |
+| `flutter gen-l10n` lỗi | Kiểm tra `flutter: generate: true` và `l10n.yaml`/ARB. |
+| `FlutterFirebaseMessagingPlugin` cannot find symbol | Kiểm tra phiên bản package, `.dart_tool/package_config.json`, cache Pub, build Gradle; không sửa `GeneratedPluginRegistrant.java` thủ công. |
+| Icon app chưa đổi | Generate icon cho đúng flavor `development`/`production`; kiểm tra `android/app/src/<flavor>/res` và cài bản build mới. |
+| Google Sign-In lỗi trên bản release | Kiểm tra SHA-1/SHA-256 của release certificate và cấu hình Firebase Android app. |
+| Gradle/JDK lỗi | `flutter doctor -v`, JDK 17 và Gradle/AGP tương thích; kiểm tra ổ đĩa/temp folder. |
+| Reminder không đến đúng phút | Quyền thông báo, MIUI battery restrictions, alarm mode inexact và đồng bộ giờ nhắc. |
 
-Để xem log Flutter trong khi chạy ứng dụng:
-
-```powershell
-flutter logs
-```
-
-Hoặc lọc log Android (Windows PowerShell):
+Khi cần chẩn đoán:
 
 ```powershell
-adb logcat -s flutter:I '*:S'
-```
-
-## 12. Kiến trúc dự án (tóm tắt)
-
-```text
-tickly/
-├── android/
-├── assets/                         # Nếu có
-├── lib/
-│   ├── main.dart
-│   └── src/
-│       ├── core/
-│       │   ├── injections/
-│       │   ├── notification/
-│       │   ├── theme/
-│       │   └── ...
-│       ├── features/
-│       │   ├── auth/
-│       │   ├── tasks/
-│       │   ├── categories/
-│       │   ├── calendar/
-│       │   ├── statistics/
-│       │   └── main_wrapper/
-│       └── router/
-├── .env.example                    # Nên có
-├── .env.development                # Tạo cục bộ
-├── .env.production                 # Cấu hình theo môi trường
-└── pubspec.yaml
-```
-
-Ở các feature có nghiệp vụ và nguồn dữ liệu riêng, kiến trúc thường chia thành `data/`, `domain/`, `presentation/`. Statistics ở giai đoạn hiện tại có thể tái sử dụng `TaskBloc` và dữ liệu Task để tính toán, tránh tải Firestore lần thứ hai.
-
-## 13. Lưu ý bảo mật
-
-- Không commit token, mật khẩu, tài khoản service hoặc private key vào repository.
-- Firebase Auth SDK quản lý phiên đăng nhập; **không cần lưu Firebase ID Token thủ công vào Hive**.
-- Không tắt Firestore Rules để thử tạo Task.
-- Dữ liệu nhắc nhở lưu cục bộ trên thiết bị cần được dọn khi người dùng đăng xuất hoặc đổi tài khoản.
-- Không đưa thông tin cá nhân, token hoặc toàn bộ response nhạy cảm vào log Production.
-
-## 14. Kiểm tra chất lượng mã nguồn
-
-```powershell
-dart format lib
+flutter doctor -v
 flutter analyze
-flutter test
+flutter pub deps
+flutter run --flavor development -t lib/main.dart -v
 ```
 
-`flutter test` chỉ thành công khi các test hiện tại hợp lệ và đã khai báo đủ `dev_dependencies` cần thiết.
+Chỉ chạy `flutter clean` khi thực sự gặp lỗi build/cache, không cần dùng trước mọi lần chạy.
+
+## 12. Git và quy tắc bảo mật
+
+- Không đẩy `.env.*` chứa cấu hình nội bộ nếu chính sách repo không cho phép; nên cung cấp `.env.example` không chứa secret.
+- Không đẩy keystore, key.properties, service account credentials, token đăng nhập.
+- `google-services.json` và `firebase_options.dart` chủ yếu chứa cấu hình Firebase client, **không phải service-account secret**; việc commit hay không phụ thuộc quy định của dự án. Luôn bảo vệ dữ liệu bằng Authentication + Firestore Rules.
+- Với file sinh tự động (`*.g.dart`, `injections.config.dart`), tuân theo chính sách Git của nhóm và bảo đảm mọi thành viên có thể generate lại; đừng tùy tiện xóa file đang được dự án import.
+- Trước khi mở Pull Request: `dart format .`, `flutter analyze`, chạy các test liên quan và thử flavor Development.
+
+## 13. Checklist nhanh cho thành viên mới
+
+- [ ] Clone repo, cài Flutter/Android SDK/JDK 17.
+- [ ] `flutter doctor` không có lỗi Android blocker.
+- [ ] `flutter pub get` thành công.
+- [ ] Nhận đúng `.env.development` / `.env.production` (nếu cần).
+- [ ] Firebase Android apps đúng `applicationId` và `google-services.json` đúng flavor.
+- [ ] `Firebase.initializeApp` chọn đúng project khi chạy Development.
+- [ ] Firebase Authentication / Firestore Rules đã được cấu hình cho project test.
+- [ ] `dart run build_runner build --delete-conflicting-outputs` thành công.
+- [ ] Hive CE initialization / generated adapters không lỗi.
+- [ ] `flutter gen-l10n` thành công.
+- [ ] `flutter run --flavor development -t lib/main.dart` chạy được.
+- [ ] Đăng nhập và tạo một Task kiểm thử trên Firestore Development.
+- [ ] Nhắc nhở Android và các màn Calendar/Statistics hoạt động.
+
+## 14. Tài liệu tham khảo
+
+- [Flutter — Install / setup](https://docs.flutter.dev/get-started/install)
+- [Firebase — Add Firebase to Flutter](https://firebase.google.com/docs/flutter/setup)
+- [Firebase — Security Rules](https://firebase.google.com/docs/firestore/security/get-started)
+- [FlutterFire CLI](https://firebase.flutter.dev/docs/cli)
+- [Injectable](https://pub.dev/packages/injectable)
+- [Hive CE](https://pub.dev/packages/hive_ce)
+- [Flutter Launcher Icons](https://pub.dev/packages/flutter_launcher_icons)
 
 ---
 
-**Tickly** — Quản lý công việc đơn giản, giúp bạn tập trung vào những điều quan trọng mỗi ngày.
+**Ghi chú bảo trì:** Các đường dẫn cụ thể tới `FirebaseOptions`, hàm bootstrap DI/Hive và URL Git chưa được cung cấp đầy đủ trong cuộc trò chuyện; README đánh dấu rõ điểm cần đối chiếu với repository, thay vì giả định những thành phần đó đã tồn tại. Cập nhật tài liệu này khi thay đổi flavors, Firebase project, model hoặc quy trình build.
